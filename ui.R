@@ -20,7 +20,6 @@ ui = dashboardPage(
     ),
     sidebarMenu(
       id = "sidebarmenu",
-      menuItem("数据总览", tabName = "overview", icon = icon("tachometer-alt")),
       menuItem("行情展示", tabName = "market", icon = icon("chart-line")),
       menuItem("策略控制", tabName = "strategy", icon = icon("cogs")),
       menuItem("订单管理", tabName = "order", icon = icon("exchange-alt")),
@@ -108,6 +107,7 @@ ui = dashboardPage(
         overflow: hidden;
         animation: cyberpulse 4s ease-in-out infinite;
         min-height: 104px;
+        margin-bottom: 18px;
         display: flex;
         flex-direction: column;
       }
@@ -170,7 +170,6 @@ ui = dashboardPage(
       .echarts4r { width: 100%; }
     "))),
     tabItems(
-      overview_ui("overview"),
       market_ui("market"),
       strategy_ui("strategy"),
       order_ui("order"),

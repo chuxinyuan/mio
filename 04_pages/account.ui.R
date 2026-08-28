@@ -4,7 +4,7 @@ account_ui = function(id) {
   ns = NS(id)
   tabItem(
     tabName = "account",
-    fluidRow(uiOutput(ns("kpis"))),
+    uiOutput(ns("kpis")),
     fluidRow(
       box(title = "权益曲线", width = 8, status = "primary", solidHeader = TRUE,
           echarts4rOutput(ns("equity_curve"), height = "340px")),

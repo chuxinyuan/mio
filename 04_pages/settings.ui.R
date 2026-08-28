@@ -15,8 +15,8 @@ settings_ui = function(id) {
         numericInput(ns("flat_commission"), "固定佣金", value = NULL, step = 0.1),
         numericInput(ns("per_share_commission"), "每手佣金", value = NULL, step = 0.001),
         br(),
-        actionButton(ns("save"), "保存", status = "primary"),
-        actionButton(ns("reset"), "恢复默认", status = "warning")
+        actionButton(ns("save"), "保存设置", status = "primary"),
+        actionButton(ns("reset"), "恢复默认", status = "primary")
     )
   )
 }

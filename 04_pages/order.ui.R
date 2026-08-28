@@ -15,7 +15,7 @@ order_ui = function(id) {
           actionButton(ns("match"), "撮合未成交订单（按最新价）", icon = icon("check")),
           br(), br(),
           selectInput(ns("cancel_id"), "撤单订单（未成交）", choices = NULL),
-          actionButton(ns("cancel"), "撤单", status = "warning")
+          actionButton(ns("cancel"), "撤销订单", status = "warning")
       ),
       box(title = "当前订单", width = 8, status = "primary", solidHeader = TRUE,
           DTOutput(ns("orders"))),

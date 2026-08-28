@@ -22,8 +22,6 @@ source("03_components/charts.R")
 source("03_components/value_box.R")
 
 # 页面模块（进全局环境，供 ui/server 共用）
-source("04_pages/overview.ui.R")
-source("04_pages/overview.server.R")
 source("04_pages/market.ui.R")
 source("04_pages/market.server.R")
 source("04_pages/strategy.ui.R")
