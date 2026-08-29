@@ -8,6 +8,11 @@ library(echarts4r)
 library(DT)
 library(zoo)
 library(data.table)
+library(future)
+library(promises)
+library(shinyjs)
+
+future::plan(future::multisession, workers = 2)
 
 source("config.R")
 source("01_settings/path.R")

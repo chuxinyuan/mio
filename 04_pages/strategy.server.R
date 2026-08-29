@@ -3,6 +3,7 @@
 strategy_server = \(id, con, rv) {
   moduleServer(id, \(input, output, session) {
     ns = session$ns
+    optimizing = reactiveVal(FALSE)
 
     params = reactive({
       list(
@@ -54,20 +55,47 @@ strategy_server = \(id, con, rv) {
 
     observeEvent(input$optimize, {
       req(!is.null(rv$data))
-      showNotification("开始参数优化（可能较慢）...", type = "message")
-      best = tryCatch(
-        optimize_params(rv$data, year = input$year),
-        error = \(e) {
-          showNotification(paste("优化失败:", e$message), type = "error")
-          NULL
+      if (optimizing()) {
+        showNotification("参数优化进行中，请稍候", type = "warning")
+        return()
+      }
+      optimizing(TRUE)
+      shinyjs::disable("optimize")
+      showNotification("开始参数优化（后台运行，可继续操作）...", type = "message")
+
+      data = isolate(rv$data)
+      year = isolate(input$year)
+      pr = future::future(
+        {
+          library(zoo)
+          library(caTools)
+          library(data.table)
+          optimize_params(data, year = year)
+        },
+        seed = TRUE
+      )
+
+      promises::then(
+        pr,
+        onFulfilled = \(best) {
+          req(!is.null(best))
+          updateNumericInput(session, "n1", value = round(best[["n1"]]))
+          updateNumericInput(session, "n2", value = round(best[["n_fact"]] * best[["n1"]]))
+          updateNumericInput(session, "n_sharpe", value = round(best[["n_sharpe"]]))
+          updateNumericInput(session, "sh_thresh", value = round(best[["sh_thresh"]], 3))
+          showNotification("优化完成，参数已回填", type = "message")
+        },
+        onRejected = \(e) {
+          showNotification(paste("优化失败:", conditionMessage(e)), type = "error")
         }
       )
-      req(!is.null(best))
-      updateNumericInput(session, "n1", value = round(best[["n1"]]))
-      updateNumericInput(session, "n2", value = round(best[["n_fact"]] * best[["n1"]]))
-      updateNumericInput(session, "n_sharpe", value = round(best[["n_sharpe"]]))
-      updateNumericInput(session, "sh_thresh", value = round(best[["sh_thresh"]], 3))
-      showNotification("优化完成，参数已回填", type = "message")
+      promises::finally(
+        pr,
+        onFinally = \() {
+          optimizing(FALSE)
+          shinyjs::enable("optimize")
+        }
+      )
     })
 
     observeEvent(input$refresh, {

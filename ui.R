@@ -29,6 +29,7 @@ ui = dashboardPage(
     )
   ),
   body = dashboardBody(
+    shinyjs::useShinyjs(),
     tags$style(
       HTML(
         paste0(

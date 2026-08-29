@@ -87,20 +87,19 @@ simulate = \(
   )
     stop("Mismatching or missing column names in entry, exit, favor, close_mat, or open_mat.")
 
-  favor = zoo(
-    replace(as.matrix(favor), is.na(as.matrix(favor)), 0),
-    order.by = index(close_mat)
-  )
-  names(favor) = names(close_mat)
+  # 转普通矩阵加速（避免循环内 [.zoo / Ops.zoo 方法分派；列名即标的）
+  favor = replace(as.matrix(favor), is.na(as.matrix(favor)), 0)
+  open_mat = as.matrix(open_mat)
+  close_mat = as.matrix(close_mat)
+  entry = as.matrix(entry)
+  exit = as.matrix(exit)
 
   n_pos = 0
   cash_vec = rep(starting_cash, times = nrow(close_mat))
-  syms = names(close_mat)
+  syms = colnames(close_mat)
 
-  pos_qty = entry_price = zoo(
-    matrix(0, ncol = ncol(close_mat), nrow = nrow(close_mat)),
-    order.by = index(close_mat)
-  )
+  pos_qty = entry_price = matrix(0, ncol = ncol(close_mat), nrow = nrow(close_mat))
+  colnames(pos_qty) = colnames(entry_price) = syms
 
   if (!is.null(init_pos) & !is.null(init_price)) {
     pos_qty[1:max_lookback, ] = matrix(
@@ -117,14 +116,12 @@ simulate = \(
     )
   }
 
-  names(pos_qty) = names(entry_price) = syms
-
   equity = rep(NA, nrow(close_mat))
 
   rm_na = pmax(
-    unlist(lapply(favor, equ_na)),
-    unlist(lapply(entry, equ_na)),
-    unlist(lapply(exit, equ_na))
+    apply(favor, 2, equ_na),
+    apply(entry, 2, equ_na),
+    apply(exit, 2, equ_na)
   )
 
   for (j in 1:ncol(entry)) {

@@ -22,6 +22,7 @@ exit_func = \(v) {
 }
 
 # 由宽矩阵 close_mat / return_mat 生成 entry / exit / favor
+# 向量化实现：入场/出场/分位全部用矩阵运算，避免 rollapply 逐窗口调用 R 函数
 make_signals = \(close_mat, return_mat, n1, n2, n_sharpe, sh_thresh) {
   indic = zoo(
     runmean(close_mat, n1, endrule = "NA", align = "right") -
@@ -42,33 +43,34 @@ make_signals = \(close_mat, return_mat, n1, n2, n_sharpe, sh_thresh) {
   )
   names(favor) = names(close_mat)
 
-  entry = rollapply(
-    cbind(indic, favor),
-    FUN = \(v) entry_func(v, sh_thresh),
-    width = 2,
-    fill = NA,
-    align = "right",
-    by.column = FALSE
-  )
-  exit = rollapply(
-    cbind(indic, favor),
-    FUN = \(v) exit_func(v),
-    width = 2,
-    fill = NA,
-    align = "right",
-    by.column = FALSE
-  )
+  ind = as.matrix(indic)
+  fav = as.matrix(favor)
+  nr = nrow(ind)
+  nc = ncol(ind)
 
-  # 统一为与 close_mat 同型的矩阵并设置列名（单标的时 rollapply 会退化为向量）
-  entry = zoo(
-    matrix(as.numeric(entry), ncol = ncol(close_mat)),
-    order.by = index(close_mat)
-  )
-  exit = zoo(
-    matrix(as.numeric(exit), ncol = ncol(close_mat)),
-    order.by = index(close_mat)
-  )
-  names(entry) = names(exit) = names(close_mat)
+  # 入场：MACD 上穿 0 且当日 favor 超过当日横截面分位（首行 NA，与 rollapply 口径一致）
+  fq = apply(fav, 1, quantile, probs = sh_thresh, na.rm = TRUE)
+  entry = matrix(NA, nrow = nr, ncol = nc)
+  if (nr >= 2) {
+    entry[2:nr, ] = as.numeric(
+      ind[1:(nr - 1), , drop = FALSE] <= 0 &
+        ind[2:nr, , drop = FALSE] > 0 &
+        fav[2:nr, , drop = FALSE] > matrix(fq[2:nr], nrow = nr - 1, ncol = nc)
+    )
+  }
+  entry = zoo(entry, order.by = index(close_mat))
+  names(entry) = names(close_mat)
+
+  # 出场：MACD 下穿 0（与入场镜像，主动离场）
+  exit = matrix(NA, nrow = nr, ncol = nc)
+  if (nr >= 2) {
+    exit[2:nr, ] = as.numeric(
+      ind[1:(nr - 1), , drop = FALSE] >= 0 &
+        ind[2:nr, , drop = FALSE] < 0
+    )
+  }
+  exit = zoo(exit, order.by = index(close_mat))
+  names(exit) = names(close_mat)
 
   list(entry = entry, exit = exit, favor = favor)
 }
