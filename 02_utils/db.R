@@ -5,12 +5,12 @@ library(DBI)
 library(RSQLite)
 library(data.table)
 
-connect_db = function(path = DB_PATH) {
+connect_db = \(path = DB_PATH) {
   dbConnect(RSQLite::SQLite(), path)
 }
 
 # 建表（幂等）
-init_db = function(con = NULL) {
+init_db = \(con = NULL) {
   own = is.null(con)
   if (own) con = connect_db()
   on.exit(if (own) dbDisconnect(con), add = TRUE)
@@ -118,7 +118,7 @@ init_db = function(con = NULL) {
 }
 
 # ---- symbol ----
-upsert_symbols = function(con, dt) {
+upsert_symbols = \(con, dt) {
   dbExecute(
     con,
     "INSERT INTO symbol (code, name, board, is_valid)
@@ -130,7 +130,7 @@ upsert_symbols = function(con, dt) {
   invisible(dt)
 }
 
-get_symbols = function(con, valid_only = TRUE) {
+get_symbols = \(con, valid_only = TRUE) {
   q = "SELECT code, name, board, is_valid FROM symbol"
   if (valid_only) q = paste(q, "WHERE is_valid = 1")
   as.data.table(dbGetQuery(con, q))
@@ -138,7 +138,7 @@ get_symbols = function(con, valid_only = TRUE) {
 
 # ---- daily_bar ----
 # 增量 upsert：日期已存在则更新
-upsert_bars = function(con, dt) {
+upsert_bars = \(con, dt) {
   dbExecute(
     con,
     "INSERT INTO daily_bar (symbol, date, open, high, low, close, volume)
@@ -152,7 +152,7 @@ upsert_bars = function(con, dt) {
 }
 
 # 全量替换某只股票（前复权会漂移，更新时删旧插新）
-replace_bars = function(con, symbol, dt) {
+replace_bars = \(con, symbol, dt) {
   dbExecute(
     con,
     "DELETE FROM daily_bar WHERE symbol = :symbol",
@@ -162,7 +162,7 @@ replace_bars = function(con, symbol, dt) {
   invisible(dt)
 }
 
-load_bars = function(con, symbols = NULL, from = NULL, to = NULL) {
+load_bars = \(con, symbols = NULL, from = NULL, to = NULL) {
   q = "SELECT symbol, date, open, high, low, close, volume FROM daily_bar"
   cond = character(0)
   params = list()
@@ -183,7 +183,7 @@ load_bars = function(con, symbols = NULL, from = NULL, to = NULL) {
   as.data.table(dbGetQuery(con, q, params = params))
 }
 
-last_date = function(con, symbol) {
+last_date = \(con, symbol) {
   r = dbGetQuery(
     con,
     "SELECT MAX(date) AS d FROM daily_bar WHERE symbol = :symbol",
@@ -192,7 +192,7 @@ last_date = function(con, symbol) {
   r$d[[1]]
 }
 
-last_close = function(con, symbol) {
+last_close = \(con, symbol) {
   r = dbGetQuery(
     con,
     "SELECT close FROM daily_bar WHERE symbol = :symbol
@@ -203,7 +203,7 @@ last_close = function(con, symbol) {
 }
 
 # 每个标的最新一条收盘价（data.table: symbol, price）
-latest_prices = function(con) {
+latest_prices = \(con) {
   as.data.table(dbGetQuery(
     con,
     "SELECT d.symbol, d.close AS price
@@ -214,7 +214,7 @@ latest_prices = function(con) {
 }
 
 # ---- 交易 ----
-save_order = function(con, ts, symbol, side, qty, price = NA_real_) {
+save_order = \(con, ts, symbol, side, qty, price = NA_real_) {
   dbExecute(
     con,
     "INSERT INTO order_ticket (ts, symbol, side, qty, price, status)
@@ -224,7 +224,7 @@ save_order = function(con, ts, symbol, side, qty, price = NA_real_) {
   as.integer(dbGetQuery(con, "SELECT last_insert_rowid()")[1, 1])
 }
 
-set_order_status = function(con, id, status) {
+set_order_status = \(con, id, status) {
   dbExecute(
     con,
     "UPDATE order_ticket SET status = :status WHERE id = :id",
@@ -233,7 +233,7 @@ set_order_status = function(con, id, status) {
   invisible(id)
 }
 
-save_fill = function(con, order_id, ts, price, qty) {
+save_fill = \(con, order_id, ts, price, qty) {
   dbExecute(
     con,
     "INSERT INTO fill (order_id, ts, price, qty)
@@ -243,7 +243,7 @@ save_fill = function(con, order_id, ts, price, qty) {
   invisible(TRUE)
 }
 
-get_orders = function(con, status = NULL) {
+get_orders = \(con, status = NULL) {
   q = "SELECT * FROM order_ticket"
   if (!is.null(status)) q = paste(q, "WHERE status = :status")
   as.data.table(dbGetQuery(
@@ -253,10 +253,10 @@ get_orders = function(con, status = NULL) {
   ))
 }
 
-get_fills = function(con) as.data.table(dbGetQuery(con, "SELECT * FROM fill"))
+get_fills = \(con) as.data.table(dbGetQuery(con, "SELECT * FROM fill"))
 
 # ---- position ----
-upsert_position = function(con, symbol, qty, avail_qty, avg_cost) {
+upsert_position = \(con, symbol, qty, avail_qty, avg_cost) {
   dbExecute(
     con,
     "INSERT INTO position (symbol, qty, avail_qty, avg_cost)
@@ -268,10 +268,10 @@ upsert_position = function(con, symbol, qty, avail_qty, avg_cost) {
   invisible(TRUE)
 }
 
-get_positions = function(con) as.data.table(dbGetQuery(con, "SELECT * FROM position"))
+get_positions = \(con) as.data.table(dbGetQuery(con, "SELECT * FROM position"))
 
 # ---- meta ----
-set_meta = function(con, key, value) {
+set_meta = \(con, key, value) {
   dbExecute(
     con,
     "INSERT INTO meta (key, value) VALUES (:key, :value)
@@ -281,7 +281,7 @@ set_meta = function(con, key, value) {
   invisible(value)
 }
 
-get_meta = function(con, key, default = NA_character_) {
+get_meta = \(con, key, default = NA_character_) {
   r = dbGetQuery(con, "SELECT value FROM meta WHERE key = :key", list(key = key))
   if (nrow(r) == 0) default else r$value[[1]]
 }
@@ -289,7 +289,7 @@ get_meta = function(con, key, default = NA_character_) {
 # ---- settings（交易/账户参数，可在 App 设置页覆盖） ----
 
 # 默认参数（取自 config.R 全局常量）
-default_settings = function() {
+default_settings = \() {
   list(
     max_assets = MAX_ASSETS,
     starting_cash = STARTING_CASH,
@@ -302,7 +302,7 @@ default_settings = function() {
   )
 }
 
-set_setting = function(con, key, value) {
+set_setting = \(con, key, value) {
   dbExecute(
     con,
     "INSERT INTO settings (key, value) VALUES (:key, :value)
@@ -312,13 +312,13 @@ set_setting = function(con, key, value) {
   invisible(value)
 }
 
-get_setting = function(con, key, default) {
+get_setting = \(con, key, default) {
   r = dbGetQuery(con, "SELECT value FROM settings WHERE key = :key", list(key = key))
   if (nrow(r) == 0) default else type.convert(r$value[[1]], as.is = TRUE)
 }
 
 # 载入全部参数，DB 缺失时回退到默认值
-load_settings = function(con) {
+load_settings = \(con) {
   s = default_settings()
   rows = as.data.table(dbGetQuery(con, "SELECT key, value FROM settings"))
   for (i in seq_len(nrow(rows))) {
@@ -329,7 +329,7 @@ load_settings = function(con) {
 }
 
 # ---- account ----
-save_snapshot = function(con, ts, cash, equity) {
+save_snapshot = \(con, ts, cash, equity) {
   dbExecute(
     con,
     "INSERT INTO account_snapshot (ts, cash, equity) VALUES (:ts, :cash, :equity)",
@@ -338,10 +338,10 @@ save_snapshot = function(con, ts, cash, equity) {
   invisible(TRUE)
 }
 
-get_snapshots = function(con) as.data.table(dbGetQuery(con, "SELECT * FROM account_snapshot"))
+get_snapshots = \(con) as.data.table(dbGetQuery(con, "SELECT * FROM account_snapshot"))
 
 # ---- log ----
-write_log = function(
+write_log = \(
   con,
   message,
   level = "info",
@@ -356,7 +356,7 @@ write_log = function(
   invisible(TRUE)
 }
 
-get_logs = function(con, limit = 500) {
+get_logs = \(con, limit = 500) {
   as.data.table(dbGetQuery(
     con,
     paste0("SELECT * FROM sys_log ORDER BY ts DESC LIMIT ", as.integer(limit))

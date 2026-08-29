@@ -5,14 +5,14 @@ library(httr)
 library(jsonlite)
 library(data.table)
 
-adjust_code = function(adjust) {
+adjust_code = \(adjust) {
   switch(adjust, qfq = "1", hfq = "2", none = "0", "1")
 }
 
-secid = function(code) paste0("1.", code)   # 1 = 上交所
+secid = \(code) paste0("1.", code)   # 1 = 上交所
 
 # 带重试的 GET JSON
-get_json = function(url, query = list(), n = 3L, timeout_s = 20) {
+get_json = \(url, query = list(), n = 3L, timeout_s = 20) {
   ua = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
   last = NULL
   for (i in seq_len(n)) {
@@ -38,7 +38,7 @@ get_json = function(url, query = list(), n = 3L, timeout_s = 20) {
 }
 
 # 上证50成分
-fetch_sse50 = function() {
+fetch_sse50 = \() {
   parsed = get_json(
     "http://push2.eastmoney.com/api/qt/clist/get",
     query = list(
@@ -57,7 +57,7 @@ fetch_sse50 = function() {
 
 # 前复权日K（字段顺序：date, open, close, high, low, volume, ...）
 # from / adjust 取自 config.R 全局常量
-fetch_daily = function(code, to = Sys.Date()) {
+fetch_daily = \(code, to = Sys.Date()) {
   parsed = get_json(
     "http://push2his.eastmoney.com/api/qt/stock/kline/get",
     query = list(
@@ -99,8 +99,10 @@ fetch_daily = function(code, to = Sys.Date()) {
 
 # 实时行情（最新价/今开/最高/最低/成交量/成交额/涨跌/涨跌幅）
 # 优先批量 clist/get（一次取全池，fltt=2 下价格/涨跌额已为元、涨跌幅已为 %），失败回退逐只
-fetch_realtime = function(codes) {
-  dt = tryCatch(fetch_realtime_batch(codes), error = \(e) data.table())
+fetch_realtime = \(codes) {
+  dt = tryCatch(
+    fetch_realtime_batch(codes), error = \(e) data.table()
+  )
   if (nrow(dt) > 0) return(dt)
 
   # 回退：逐只 stock/get（字段为分，需 /100）
@@ -132,7 +134,7 @@ fetch_realtime = function(codes) {
 }
 
 # 批量实时行情（单次 clist/get 取全池；codes 非空时过滤）
-fetch_realtime_batch = function(codes = NULL, pool_fs = "b:BK0611") {
+fetch_realtime_batch = \(codes = NULL, pool_fs = "b:BK0611") {
   parsed = get_json(
     "http://push2.eastmoney.com/api/qt/clist/get",
     query = list(
@@ -150,7 +152,7 @@ fetch_realtime_batch = function(codes = NULL, pool_fs = "b:BK0611") {
 }
 
 # 纯解析：clist/get 的 diff → 统一 data.table（可离线测试）
-parse_realtime_batch = function(diff) {
+parse_realtime_batch = \(diff) {
   if (is.null(diff)) return(data.table())
   d = as.data.table(diff)
   if (nrow(d) == 0) return(data.table())
@@ -172,11 +174,11 @@ parse_realtime_batch = function(diff) {
   d
 }
 
-`%||%` = function(a, b) if (is.null(a)) b else a
+`%||%` = \(a, b) if (is.null(a)) b else a
 
 # 全量刷新标的池历史行情入库（前复权漂移 → 删旧插新，逐只限速）
 # from 取自 config.R 全局变量
-refresh_universe = function(
+refresh_universe = \(
   con = NULL,
   to = Sys.Date(),
   throttle_s = 1,

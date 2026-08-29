@@ -1,7 +1,7 @@
 # 03_components/value_box.R — 赛博 KPI 卡（sparkline + 涨跌箭头）
 
 # 内联 SVG sparkline（纯函数，可在 renderUI 中使用）
-inline_sparkline = function(values, color, width = 90, height = 24) {
+inline_sparkline = \(values, color, width = 90, height = 24) {
   v = as.numeric(values)
   v = v[!is.na(v)]
   if (length(v) < 2) return(HTML(""))
@@ -18,9 +18,9 @@ inline_sparkline = function(values, color, width = 90, height = 24) {
   ))
 }
 
-change_arrow = function(x) ifelse(x >= 0, "▲", "▼")
+change_arrow = \(x) ifelse(x >= 0, "▲", "▼")
 
-value_box = function(value, label, accent = CYAN, change = NULL, sparkline = NULL) {
+value_box = \(value, label, accent = CYAN, change = NULL, sparkline = NULL) {
   show_change = !is.null(change) && !is.na(change) && change != 0
   tags$div(
     class = "cyber-box",

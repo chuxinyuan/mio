@@ -1,6 +1,6 @@
 # 04_pages/market.server.R — 行情展示
 
-market_server = function(id, con, rv) {
+market_server = \(id, con, rv) {
   moduleServer(id, \(input, output, session) {
     ns = session$ns
 

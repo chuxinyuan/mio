@@ -1,6 +1,6 @@
 # 04_pages/strategy.server.R — 策略控制
 
-strategy_server = function(id, con, rv) {
+strategy_server = \(id, con, rv) {
   moduleServer(id, \(input, output, session) {
     ns = session$ns
 

@@ -1,10 +1,10 @@
 # 04_pages/settings.server.R — 设置
 
-settings_server = function(id, con, rv) {
+settings_server = \(id, con, rv) {
   moduleServer(id, \(input, output, session) {
     ns = session$ns
 
-    fill_inputs = function(s) {
+    fill_inputs = \(s) {
       updateNumericInput(session, "starting_cash", value = s$starting_cash)
       updateNumericInput(session, "max_assets", value = s$max_assets)
       updateNumericInput(session, "commission_rate", value = s$commission_rate)

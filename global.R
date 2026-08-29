@@ -50,7 +50,7 @@ rv = reactiveValues(
   refresh = 0
 )
 
-reload = function() {
+reload = \() {
   bars = load_bars(con)
   rv$bars = bars
   if (nrow(bars) > 0) {

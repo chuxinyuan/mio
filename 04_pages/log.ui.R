@@ -1,6 +1,6 @@
 # 04_pages/log.ui.R — 系统日志
 
-log_ui = function(id) {
+log_ui = \(id) {
   ns = NS(id)
   tabItem(
     tabName = "log",

@@ -5,7 +5,7 @@ library(zoo)
 library(caTools)
 
 # 入场判定：MACD 上穿 0 且 favor 达到 sh_thresh 分位
-entry_func = function(v, sh_thresh) {
+entry_func = \(v, sh_thresh) {
   cols = ncol(v) / 2
   as.numeric(
     v[1, 1:cols] <= 0 &
@@ -16,13 +16,13 @@ entry_func = function(v, sh_thresh) {
 }
 
 # 出场判定：MACD 下穿 0（与入场镜像，主动离场）
-exit_func = function(v) {
+exit_func = \(v) {
   cols = ncol(v) / 2
   as.numeric(v[1, 1:cols] >= 0 & v[2, 1:cols] < 0)
 }
 
 # 由宽矩阵 close_mat / return_mat 生成 entry / exit / favor
-make_signals = function(close_mat, return_mat, n1, n2, n_sharpe, sh_thresh) {
+make_signals = \(close_mat, return_mat, n1, n2, n_sharpe, sh_thresh) {
   indic = zoo(
     runmean(close_mat, n1, endrule = "NA", align = "right") -
       runmean(close_mat, n2, endrule = "NA", align = "right"),
@@ -74,7 +74,7 @@ make_signals = function(close_mat, return_mat, n1, n2, n_sharpe, sh_thresh) {
 }
 
 # 最新一期的信号（今日建议）：entry==1 的标的按 favor 降序
-latest_signals = function(data, n1, n2, n_sharpe, sh_thresh) {
+latest_signals = \(data, n1, n2, n_sharpe, sh_thresh) {
   sig = make_signals(
     data$close,
     data$return,

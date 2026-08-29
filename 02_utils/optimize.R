@@ -1,6 +1,6 @@
 # R/optimize.R — 广义模式搜索参数优化（沿袭原书 optimizeFunc.R）
 
-optimize_params = function(data, year) {
+optimize_params = \(data, year) {
 
   max_iter = MAX_ITER
   delta_thresh = 0.05

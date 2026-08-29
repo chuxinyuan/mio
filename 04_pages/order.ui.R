@@ -1,6 +1,6 @@
 # 04_pages/order.ui.R — 订单管理
 
-order_ui = function(id) {
+order_ui = \(id) {
   ns = NS(id)
   tabItem(
     tabName = "order",

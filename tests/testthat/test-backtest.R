@@ -1,6 +1,6 @@
 # tests/testthat/test-backtest.R — 回测引擎测试（simulate 不变量）
 
-build = function(syms, n = 60) {
+build = \(syms, n = 60) {
   bars = synthetic_bars(syms, n_days = n)
   data = prepare_data(bars)
   data$return = make_return(data$close)

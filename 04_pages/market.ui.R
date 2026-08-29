@@ -1,6 +1,6 @@
 # 04_pages/market.ui.R — 行情展示
 
-market_ui = function(id) {
+market_ui = \(id) {
   ns = NS(id)
   tabItem(
     tabName = "market",

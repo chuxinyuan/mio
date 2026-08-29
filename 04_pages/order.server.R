@@ -1,6 +1,6 @@
 # 04_pages/order.server.R — 订单管理
 
-order_server = function(id, con, rv) {
+order_server = \(id, con, rv) {
   moduleServer(id, \(input, output, session) {
     ns = session$ns
 

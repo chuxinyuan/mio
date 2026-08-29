@@ -1,6 +1,6 @@
 # 04_pages/account.server.R — 账户监控
 
-account_server = function(id, con, rv) {
+account_server = \(id, con, rv) {
   moduleServer(id, \(input, output, session) {
     ns = session$ns
 

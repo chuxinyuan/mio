@@ -1,6 +1,6 @@
 # 04_pages/settings.ui.R — 设置
 
-settings_ui = function(id) {
+settings_ui = \(id) {
   ns = NS(id)
   tabItem(
     tabName = "settings",

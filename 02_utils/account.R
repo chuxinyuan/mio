@@ -4,19 +4,19 @@
 
 library(data.table)
 
-commission = function(amount, settings) settings$flat_commission + amount * settings$commission_rate
-stamp_duty = function(amount, settings) amount * settings$stamp_duty
+commission = \(amount, settings) settings$flat_commission + amount * settings$commission_rate
+stamp_duty = \(amount, settings) amount * settings$stamp_duty
 
 # 板块与涨跌停比例（上交所：688 科创板 ±20%，其余主板 ±10%）
-limit_rate = function(code) ifelse(substr(code, 1, 3) == "688", 0.20, 0.10)
+limit_rate = \(code) ifelse(substr(code, 1, 3) == "688", 0.20, 0.10)
 
-price_limits = function(code, prev_close) {
+price_limits = \(code, prev_close) {
   r = limit_rate(code)
   list(up = round(prev_close * (1 + r), 2), down = round(prev_close * (1 - r), 2))
 }
 
 # 初始化账户（首次写入初始现金）
-init_account = function(con) {
+init_account = \(con) {
   s = get_snapshots(con)
   if (nrow(s) == 0) {
     cash = load_settings(con)$starting_cash
@@ -25,14 +25,14 @@ init_account = function(con) {
   invisible(get_cash(con))
 }
 
-get_cash = function(con) {
+get_cash = \(con) {
   s = get_snapshots(con)
   if (nrow(s) == 0) return(load_settings(con)$starting_cash)
   tail(s, 1)$cash
 }
 
 # 当前账户状态（需当日收盘价做市值）
-get_account = function(con, prices = NULL) {
+get_account = \(con, prices = NULL) {
   cash = get_cash(con)
   pos = get_positions(con)
   if (!is.null(prices)) {
@@ -47,7 +47,7 @@ get_account = function(con, prices = NULL) {
 }
 
 # 新交易日结算：T+1 解锁（全部持仓可卖）
-rollover_positions = function(con, date = Sys.Date()) {
+rollover_positions = \(con, date = Sys.Date()) {
   last = get_meta(con, "rollover_date", default = "")
   if (as.character(date) <= last) return(invisible(FALSE))
   dbExecute(con, "UPDATE position SET avail_qty = qty")
@@ -56,7 +56,7 @@ rollover_positions = function(con, date = Sys.Date()) {
 }
 
 # 下单（校验：100 股整数倍、现金/可卖数量充足、涨跌停价）
-place_order = function(
+place_order = \(
   con,
   symbol,
   side,
@@ -101,14 +101,14 @@ place_order = function(
   list(ok = TRUE, id = id)
 }
 
-cancel_order = function(con, id) {
+cancel_order = \(con, id) {
   set_order_status(con, id, "cancelled")
   write_log(con, sprintf("撤单 #%d", id), "info", "account")
   invisible(TRUE)
 }
 
 # 撮合所有 open 订单（price_map: named vector，symbol -> 成交价）
-match_orders = function(
+match_orders = \(
   con,
   price_map,
   ts = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
@@ -183,7 +183,7 @@ match_orders = function(
 # ------------------------------
 
 # 纯决策逻辑：由当前持仓与信号向量计算要买卖的标的（沿袭 simulate 的 Step 5-7，仅做多）
-decide_trades = function(syms, entry, exit, favor, held, max_assets) {
+decide_trades = \(syms, entry, exit, favor, held, max_assets) {
   names(entry) = names(exit) = names(favor) = syms
 
   long_pos = intersect(held, syms)
@@ -208,7 +208,7 @@ decide_trades = function(syms, entry, exit, favor, held, max_assets) {
 }
 
 # 由当前持仓与最新信号计算要买卖的标的
-compute_trades = function(data, n1, n2, n_sharpe, sh_thresh, held, max_assets) {
+compute_trades = \(data, n1, n2, n_sharpe, sh_thresh, held, max_assets) {
   sig = make_signals(data$close, data$return, n1, n2, n_sharpe, sh_thresh)
   syms = names(data$close)
   entry = as.numeric(sig$entry[nrow(sig$entry), ])
@@ -218,7 +218,7 @@ compute_trades = function(data, n1, n2, n_sharpe, sh_thresh, held, max_assets) {
 }
 
 # 按信号自动下单：卖出持仓中应退出的，买入信号中应进场的（等权分配现金）
-auto_trade = function(
+auto_trade = \(
   con,
   data,
   n1,

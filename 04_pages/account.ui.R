@@ -1,6 +1,6 @@
 # 04_pages/account.ui.R — 账户监控
 
-account_ui = function(id) {
+account_ui = \(id) {
   ns = NS(id)
   tabItem(
     tabName = "account",

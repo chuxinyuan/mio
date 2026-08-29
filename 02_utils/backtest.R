@@ -11,9 +11,9 @@ library(data.table)
 
 # bars: data.table(symbol, date, open, high, low, close, volume)
 # 返回宽 zoo 矩阵列表（行=日期，列=标的）
-prepare_data = function(bars) {
+prepare_data = \(bars) {
   bars = bars[order(date)]
-  w = function(col) {
+  w = \(col) {
     d = dcast(bars, date ~ symbol, value.var = col)
     m = as.matrix(d[, -1, drop = FALSE])
     zoo(m, order.by = as.Date(d$date))
@@ -28,7 +28,7 @@ prepare_data = function(bars) {
 }
 
 # 沿用原书 return.R 口径：return_mat = close_mat / lag(close_mat, -1) - 1（首行 NA）
-make_return = function(close_mat) {
+make_return = \(close_mat) {
   na_pad = zoo(
     matrix(NA, nrow = 1, ncol = ncol(close_mat)),
     order.by = index(close_mat)[1]
@@ -42,12 +42,12 @@ make_return = function(close_mat) {
 # 注意：此处如实扣除 flat_commission；原书中 "- flatCommission" 因独立成行实为死代码未生效
 # ------------------------------
 
-equ_na = function(v) {
+equ_na = \(v) {
   o = which(!is.na(v))[1]
   ifelse(is.na(o), length(v) + 1, o)
 }
 
-simulate = function(
+simulate = \(
   open_mat,
   close_mat,
   entry,
@@ -260,7 +260,7 @@ simulate = function(
 # 评估（沿袭原书 evaluate）
 # ------------------------------
 
-evaluate = function(
+evaluate = \(
   data,
   param,
   year,
@@ -342,7 +342,7 @@ evaluate = function(
 # 回测入口 + 绩效
 # ------------------------------
 
-run_backtest = function(bars, param, year, settings = NULL) {
+run_backtest = \(bars, param, year, settings = NULL) {
   data = prepare_data(bars)
   data$return = make_return(data$close)
   results = evaluate(data, param, year = year, settings = settings, return_data = TRUE)
@@ -351,7 +351,7 @@ run_backtest = function(bars, param, year, settings = NULL) {
   list(equity = equity, dates = dates, results = results)
 }
 
-calc_metrics = function(equity, dates = NULL) {
+calc_metrics = \(equity, dates = NULL) {
   v = equity[!is.na(equity)]
   if (length(v) < 2) return(NULL)
   ret = (v[-1] / v[-length(v)]) - 1

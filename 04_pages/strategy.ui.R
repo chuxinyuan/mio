@@ -1,6 +1,6 @@
 # 04_pages/strategy.ui.R — 策略控制
 
-strategy_ui = function(id) {
+strategy_ui = \(id) {
   ns = NS(id)
   tabItem(
     tabName = "strategy",

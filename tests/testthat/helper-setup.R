@@ -1,7 +1,7 @@
 # tests/testthat/helper-setup.R — 测试公共环境
 # source 项目源码，提供临时 DB 与合成数据工具（全部离线，不触网）
 
-find_proj_root = function(start = getwd()) {
+find_proj_root = \(start = getwd()) {
   d = normalizePath(start, winslash = "/")
   repeat {
     if (file.exists(file.path(d, "global.R"))) return(d)
@@ -26,7 +26,7 @@ suppressMessages({
 })
 
 # 临时 SQLite 连接（已 init_db + init_account，初始现金 = STARTING_CASH）
-new_test_con = function() {
+new_test_con = \() {
   con = connect_db(tempfile(fileext = ".db"))
   init_db(con)
   init_account(con)
@@ -34,7 +34,7 @@ new_test_con = function() {
 }
 
 # 确定性合成行情：n_days 个工作日 × syms 个标的
-synthetic_bars = function(
+synthetic_bars = \(
   syms = c("600000", "600519", "601318", "600036"),
   n_days = 60,
   start = "2023-01-03",

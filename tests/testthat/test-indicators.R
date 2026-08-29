@@ -1,6 +1,6 @@
 # tests/testthat/test-indicators.R — 信号生成测试
 
-build = function(syms, n = 80) {
+build = \(syms, n = 80) {
   bars = synthetic_bars(syms, n_days = n)
   data = prepare_data(bars)
   data$return = make_return(data$close)

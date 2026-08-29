@@ -1,6 +1,6 @@
 # 04_pages/log.server.R — 系统日志
 
-log_server = function(id, con, rv) {
+log_server = \(id, con, rv) {
   moduleServer(id, \(input, output, session) {
     ns = session$ns
 

@@ -1,6 +1,6 @@
 # 03_components/charts.R — ECharts 图表组件（深色霓虹）
 
-kline_chart = function(d) {
+kline_chart = \(d) {
   d |>
     e_charts(date) |>
     e_candle(
@@ -55,7 +55,7 @@ kline_chart = function(d) {
     e_theme("dark")
 }
 
-equity_chart = function(d) {
+equity_chart = \(d) {
   d |>
     e_charts(ts) |>
     e_line(
@@ -93,5 +93,5 @@ equity_chart = function(d) {
     e_theme("dark")
 }
 
-fmt_money = function(x) paste0("¥", format(round(x, 2), big.mark = ",", scientific = FALSE))
-fmt_signed = function(x) paste0(ifelse(x >= 0, "+", ""), format(round(x, 2), big.mark = ",", scientific = FALSE))
+fmt_money = \(x) paste0("¥", format(round(x, 2), big.mark = ",", scientific = FALSE))
+fmt_signed = \(x) paste0(ifelse(x >= 0, "+", ""), format(round(x, 2), big.mark = ",", scientific = FALSE))
