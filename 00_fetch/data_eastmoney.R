@@ -257,6 +257,26 @@ fetch_realtime_batch = \(codes = NULL, pool_fs = "b:BK0611") {
   dt
 }
 
+# 上证指数实时行情（导航栏展示；延时接口，字段为分需 /100）
+fetch_index = \() {
+  parsed = em_get(
+    "/api/qt/stock/get",
+    query = list(
+      secid = "1.000001",
+      fields = "f43,f44,f45,f46,f47,f48,f57,f58,f169,f170"
+    ),
+    timeout_s = 15
+  )
+  d = parsed$data
+  if (is.null(d)) return(NULL)
+  data.table(
+    name = d$f58 %||% "上证指数",
+    price = (d$f43 %||% NA_real_) / 100,
+    change = (d$f169 %||% NA_real_) / 100,
+    pct = (d$f170 %||% NA_real_) / 100
+  )
+}
+
 # 纯解析：clist/get 的 diff → 统一 data.table（可离线测试）
 parse_realtime_batch = \(diff) {
   if (is.null(diff)) return(data.table())

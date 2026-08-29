@@ -28,7 +28,7 @@ market_ui = \(id) {
     ),
     fluidRow(
       box(
-        title = "实时行情（10 秒刷新）",
+        title = "实时行情",
         width = 12,
         status = "success",
         solidHeader = TRUE,

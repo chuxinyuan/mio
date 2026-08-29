@@ -64,8 +64,8 @@ market_server = \(id, con, rv) {
         rownames = FALSE,
         colnames = c(
           "代码", "名称", "现价", "今开",
-          "最高", "最低", "成交量", "成交额（亿）",
-          "涨跌额", "涨跌幅"
+          "最高", "最低", "成交量（手）", "成交额（亿）",
+          "涨跌额", "涨跌幅（%）"
         ),
         options = list(dom = "t", pageLength = 50)
       ) |>

@@ -48,7 +48,7 @@ kline_chart = \(d) {
       axisLabel = list(show = FALSE),
       splitLine = list(show = FALSE)
     ) |>
-    e_datazoom(type = "slider", height = 16) |>
+    e_datazoom(type = "slider", height = 16, toolbox = FALSE) |>
     e_tooltip(
       trigger = "axis",
       axisPointer = list(type = "cross"),
