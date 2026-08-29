@@ -7,7 +7,7 @@ market_server = \(id, con, rv) {
     observe({
       req(nrow(rv$symbols) > 0)
       cur = isolate(input$sym)
-      choices = rv$symbols$code
+      choices = setNames(rv$symbols$code, paste0(rv$symbols$code, " ", rv$symbols$name))
       selected = if (is.null(cur) || !cur %in% choices) choices[1] else cur
       updateSelectInput(session, "sym", choices = choices, selected = selected)
     })

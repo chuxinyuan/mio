@@ -69,6 +69,16 @@ ui = dashboardPage(
       .main-sidebar {
         background: var(--nav) !important;
         border-right: 1px solid rgba(0,240,255,0.25);
+        overflow-x: hidden;
+      }
+      .main-sidebar .os-viewport {
+        overflow-x: hidden !important;
+      }
+      .main-sidebar .os-scrollbar-horizontal {
+        display: none !important;
+      }
+      .sidebar-menu, .nav-sidebar {
+        overflow-x: hidden;
       }
       .nav-sidebar .nav-link, .nav-sidebar .nav-item > .nav-link {
         color: var(--text-cyan) !important;

@@ -25,7 +25,12 @@ kline_chart = \(d) {
       y_index = 1,
       itemStyle = list(color = "rgba(0,240,255,0.35)")
     ) |>
-    e_grid(height = c("56%", "22%")) |>
+    e_grid(
+      left = "1%",
+      right = "1%",
+      containLabel = TRUE,
+      height = c("56%", "22%")
+    ) |>
     e_x_axis(
       type = "category",
       axisLabel = list(color = AXIS_TEXT),
