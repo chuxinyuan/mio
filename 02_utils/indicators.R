@@ -15,6 +15,12 @@ entry_func = function(v, sh_thresh) {
   )
 }
 
+# 出场判定：MACD 下穿 0（与入场镜像，主动离场）
+exit_func = function(v) {
+  cols = ncol(v) / 2
+  as.numeric(v[1, 1:cols] >= 0 & v[2, 1:cols] < 0)
+}
+
 # 由宽矩阵 close_mat / return_mat 生成 entry / exit / favor
 make_signals = function(close_mat, return_mat, n1, n2, n_sharpe, sh_thresh) {
   indic = zoo(runmean(close_mat, n1, endrule = "NA", align = "right") -
@@ -32,8 +38,9 @@ make_signals = function(close_mat, return_mat, n1, n2, n_sharpe, sh_thresh) {
                     width = 2, fill = NA, align = "right", by.column = FALSE)
   names(entry) = names(close_mat)
 
-  exit = zoo(matrix(0, ncol = ncol(close_mat), nrow = nrow(close_mat)),
-             order.by = index(close_mat))
+  exit = rollapply(cbind(indic, favor),
+                   FUN = function(v) exit_func(v),
+                   width = 2, fill = NA, align = "right", by.column = FALSE)
   names(exit) = names(close_mat)
 
   list(entry = entry, exit = exit, favor = favor)

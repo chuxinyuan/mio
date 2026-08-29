@@ -94,8 +94,8 @@ fetch_realtime = function(codes) {
       low     = (d$f45 %||% NA_real_) / 100,
       volume  = d$f47 %||% NA_real_,          # 单位：手
       amount  = d$f48 %||% NA_real_,          # 单位：元
-      change  = d$f169 %||% NA_real_,         # 涨跌额（分）
-      pct     = d$f170 %||% NA_real_          # 涨跌幅（%）
+      change  = (d$f169 %||% NA_real_) / 100,  # 涨跌额（元）
+      pct     = (d$f170 %||% NA_real_) / 100,  # 涨跌幅（%）
     )
   })
   rbindlist(res, fill = TRUE)

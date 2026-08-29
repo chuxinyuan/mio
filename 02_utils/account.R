@@ -75,7 +75,8 @@ place_order = function(con, symbol, side, qty, price = NA_real_,
     if (cost > get_cash(con)) return(list(ok = FALSE, msg = "现金不足"))
   }
   if (side == "sell") {
-    pos = get_positions(con)[symbol == symbol]
+    sym = symbol
+    pos = get_positions(con)[symbol == sym]
     if (nrow(pos) == 0 || pos$avail_qty < qty) return(list(ok = FALSE, msg = "可卖数量不足（T+1）"))
   }
 
