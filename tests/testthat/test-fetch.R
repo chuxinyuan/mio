@@ -51,3 +51,13 @@ test_that("parse_realtime_batch 空输入安全", {
   expect_equal(nrow(parse_realtime_batch(NULL)), 0)
   expect_equal(nrow(parse_realtime_batch(data.frame())), 0)
 })
+
+test_that("is_valid_bars 有效性判定", {
+  good = data.table(date = "2023-01-01", open = 10, high = 11, low = 9, close = 10.5, volume = 100)
+  bad_neg = copy(good)[, close := -1]
+  bad_empty = good[0]
+  expect_true(is_valid_bars(good))
+  expect_false(is_valid_bars(bad_neg))
+  expect_false(is_valid_bars(bad_empty))
+  expect_false(is_valid_bars(NULL))
+})

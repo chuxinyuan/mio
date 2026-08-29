@@ -6,7 +6,7 @@ market_ui = \(id) {
     tabName = "market",
     fluidRow(
       box(
-        title = "个股 K 线（前复权）",
+        title = "个股 K 线（后复权）",
         width = 8,
         status = "primary",
         solidHeader = TRUE,

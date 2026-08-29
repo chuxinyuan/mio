@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+
+      - name: 安装依赖
+        run: |
+          install.packages(c(
+            "shiny", "bs4Dash", "shinyWidgets", "echarts4r", "DT",
+            "zoo", "data.table", "DBI", "RSQLite", "httr", "jsonlite",
+            "caTools", "testthat", "lintr"
+          ))
+        shell: Rscript {0}
+
+      - name: 静态检查 lintr
+        run: lintr::lint_dir()
+        shell: Rscript {0}
+        continue-on-error: true
+
+      - name: 单元测试
+        run: testthat::test_dir("tests/testthat")
+        shell: Rscript {0}

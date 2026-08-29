@@ -15,7 +15,8 @@ optimize_params = \(data, year) {
   o = 1
 
   fmin = fmin_naught = evaluate(data, param, year = year, negative = TRUE)
-  optim_df[o, ] = c(param, fmin); o = o + 1
+  optim_df[o, ] = c(param, fmin)
+  o = o + 1
 
   for (k in 1:max_iter) {
 
@@ -25,7 +26,8 @@ optimize_params = \(data, year) {
       for (m in c(-1, 1)) {
         testpoint = param + m * net
         ftest = evaluate(data, testpoint, year = year, negative = TRUE)
-        optim_df[o, ] = c(testpoint, ftest); o = o + 1
+        optim_df[o, ] = c(testpoint, ftest)
+        o = o + 1
       }
     }
 
@@ -41,7 +43,8 @@ optimize_params = \(data, year) {
         for (m in c(-1, 1)) {
           testpoint = param + m * net
           ftest = evaluate(data, testpoint, year = year, negative = TRUE)
-          optim_df[o, ] = c(testpoint, ftest); o = o + 1
+          optim_df[o, ] = c(testpoint, ftest)
+          o = o + 1
         }
       }
 
@@ -61,7 +64,8 @@ optimize_params = \(data, year) {
       fmin = fmin_naught
       param = param_naught + runif(n = np, min = -delta * sigma, max = delta * sigma)
       ftest = evaluate(data, param, year = year, negative = TRUE)
-      optim_df[o, ] = c(param, ftest); o = o + 1
+      optim_df[o, ] = c(param, ftest)
+      o = o + 1
     }
   }
 

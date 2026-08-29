@@ -1,6 +1,6 @@
 # R/account.R — 模拟账户与订单撮合（paper trading）
 # 规则：T+1（当日买入次日可卖）、100 股整数倍、涨跌停（主板 ±10% / 科创板688 ±20%）
-# 状态存 SQLite；撮合为次日开盘价成交，卖出扣印花税；交易参数从 DB settings 读取
+# 状态存 SQLite；撮合按最新价成交，卖出扣印花税；交易参数从 DB settings 读取
 
 library(data.table)
 

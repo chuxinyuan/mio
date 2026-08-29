@@ -124,8 +124,8 @@ strategy_server = \(id, con, rv) {
         input$n_sharpe,
         input$sh_thresh
       )
-      names = rv$symbols[, .(symbol = code, name)]
-      sig = merge(sig, names, by = "symbol", all.x = TRUE)
+      symbols_map = rv$symbols[, .(symbol = code, name)]
+      sig = merge(sig, symbols_map, by = "symbol", all.x = TRUE)
       top = sig[entry == 1, .(symbol, name, favor = round(favor, 3))][1:min(rv$settings$max_assets, .N)]
       datatable(
         top,

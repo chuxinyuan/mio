@@ -13,28 +13,28 @@ strategy_ui = \(id) {
         numericInput(
           ns("n1"),
           "快线周期 n1",
-          value = 12,
+          value = N1_DEFAULT,
           min = 2,
           max = 150
         ),
         numericInput(
           ns("n2"),
           "慢线周期 n2",
-          value = 26,
+          value = N2_DEFAULT,
           min = 3,
           max = 300
         ),
         numericInput(
           ns("n_sharpe"),
           "Sharpe 排名窗口",
-          value = 20,
+          value = N_SHARPE_DEFAULT,
           min = 2,
           max = 200
         ),
         numericInput(
           ns("sh_thresh"),
           "入场分位 sh_thresh",
-          value = 0.5,
+          value = SH_THRESH_DEFAULT,
           min = 0,
           max = 0.99,
           step = 0.05
@@ -42,7 +42,7 @@ strategy_ui = \(id) {
         numericInput(
           ns("year"),
           "训练年份",
-          value = 2023,
+          value = YEAR,
           min = 2016,
           max = 2024
         ),

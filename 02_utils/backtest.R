@@ -136,6 +136,18 @@ simulate = \(
     }
   }
 
+  # 区间过短（nrow-1 < max_lookback 时 `:` 会生成递减序列误执行）→ 直接返回
+  if (nrow(close_mat) - 1 < max_lookback) {
+    return(
+      list(
+        equity = equity,
+        cash = cash_vec,
+        pos_qty = pos_qty,
+        entry_price = entry_price
+      )
+    )
+  }
+
   for (i in max_lookback:(nrow(close_mat) - 1)) {
 
     cash_vec[i + 1] = cash_vec[i]
@@ -291,8 +303,8 @@ evaluate = \(
     index(data$close) < as.Date(paste0(year[length(year)] + 1, "-01-01"))
 
   period = period |
-    ((1:nrow(data$close) > (which(period)[1] - max_lookback)) &
-       (1:nrow(data$close) <= (which(period)[sum(period)]) + 1))
+    ((seq_len(nrow(data$close)) > (which(period)[1] - max_lookback)) &
+       (seq_len(nrow(data$close)) <= (which(period)[sum(period)]) + 1))
 
   close_mat = data$close[period, ]
   open_mat  = data$open[period, ]
@@ -331,8 +343,14 @@ evaluate = \(
     returns = (v[-1] / v[-length(v)]) - 1
     out = mean(returns, na.rm = TRUE) / sd(returns, na.rm = TRUE)
     if (!is.nan(out)) {
-      if (negative) return(-out) else return(out)
-    } else return(0)
+      if (negative) {
+        return(-out)
+      } else {
+        return(out)
+      }
+    } else {
+      return(0)
+    }
   } else {
     results
   }
