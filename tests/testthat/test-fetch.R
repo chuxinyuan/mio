@@ -6,13 +6,6 @@ test_that("%||% 逻辑", {
   expect_equal(NULL %||% NULL, NULL)
 })
 
-test_that("adjust_code 复权映射", {
-  expect_equal(adjust_code("qfq"), "1")
-  expect_equal(adjust_code("hfq"), "2")
-  expect_equal(adjust_code("none"), "0")
-  expect_equal(adjust_code("未知"), "1")   # 默认 qfq
-})
-
 test_that("secid 上交所前缀", {
   expect_equal(secid("600000"), "1.600000")
   expect_equal(secid("688981"), "1.688981")

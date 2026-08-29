@@ -27,9 +27,6 @@ BOARD    = "SSE"              # 交易所：上交所
 EM_HOST       = "http://push2.eastmoney.com"
 EM_HOST_DELAY = "http://push2delay.eastmoney.com"
 
-# 东方财富历史 K 线接口（主域 + 编号子域，均可能被限流，作为腾讯后的回退）
-EM_HIS_HOSTS = c("http://push2his.eastmoney.com", "http://45.push2his.eastmoney.com")
-
 # ---- 交易/账户（默认值，可在 App 设置页覆盖并持久化） ----
 STARTING_CASH        = 100000
 SLIP_FACTOR          = 0.001

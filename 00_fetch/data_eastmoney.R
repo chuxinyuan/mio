@@ -1,13 +1,10 @@
-# R/data_eastmoney.R — 东方财富行情获取（上交所）
+# R/data_eastmoney.R — 行情数据获取（上交所）
+# 历史日线：腾讯 fqkline（单一来源）；行情/标的池/指数：东方财富延时接口
 # 依赖：httr + jsonlite + data.table
 
 library(httr)
 library(jsonlite)
 library(data.table)
-
-adjust_code = \(adjust) {
-  switch(adjust, qfq = "1", hfq = "2", none = "0", "1")
-}
 
 secid = \(code) paste0("1.", code)   # 1 = 上交所
 
@@ -74,11 +71,9 @@ fetch_sse50 = \() {
 
 # 日K（字段顺序：date, open, close, high, low, volume）
 # 复权口径见 config.R ADJUST（后复权 hfq：长史不会取负、回测稳健）
-# 优先腾讯 fqkline（稳定），失败回退东方财富 push2his
+# 历史日线单一来源：腾讯 fqkline
 fetch_daily = \(code, to = Sys.Date()) {
   d = tryCatch(fetch_daily_tencent(code, from = FROM, to = to), error = \(e) NULL)
-  if (is_valid_bars(d)) return(d)
-  d = tryCatch(fetch_daily_eastmoney(code, to), error = \(e) NULL)
   if (is_valid_bars(d)) return(d)
   data.table(
     symbol = code, date = character(), open = numeric(),
@@ -91,67 +86,11 @@ is_valid_bars = \(d) {
   !is.null(d) && nrow(d) > 0 && all(d$close > 0, na.rm = TRUE)
 }
 
-# 依次尝试历史 K 线 host（主域 + 编号子域）
-em_his_get = \(path, query = list(), n = 3L, timeout_s = 30) {
-  last = NULL
-  for (host in EM_HIS_HOSTS) {
-    parsed = tryCatch(
-      get_json(paste0(host, path), query = query, n = n, timeout_s = timeout_s),
-      error = \(e) {
-        last = e
-        NULL
-      }
-    )
-    if (!is.null(parsed)) return(parsed)
-  }
-  stop(conditionMessage(last))
-}
-
-fetch_daily_eastmoney = \(code, to = Sys.Date()) {
-  parsed = em_his_get(
-    "/api/qt/stock/kline/get",
-    query = list(
-      secid   = secid(code),
-      fields1 = "f1,f2,f3,f4,f5,f6",
-      fields2 = "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61",
-      klt     = 101,
-      fqt     = adjust_code(ADJUST),
-      beg     = gsub("-", "", as.character(FROM)),
-      end     = gsub("-", "", as.character(to))
-    ),
-    timeout_s = 30
-  )
-  klines = parsed$data$klines
-  if (is.null(klines) || length(klines) == 0) {
-    return(
-      data.table(
-        date = character(),
-        open = numeric(),
-        high = numeric(),
-        low = numeric(),
-        close = numeric(),
-        volume = numeric()
-      )
-    )
-  }
-  m = tstrsplit(klines, ",", fixed = TRUE)
-  dt = data.table(
-    date   = m[[1]],
-    open   = as.numeric(m[[2]]),
-    close  = as.numeric(m[[3]]),
-    high   = as.numeric(m[[4]]),
-    low    = as.numeric(m[[5]]),
-    volume = as.numeric(m[[6]])
-  )
-  dt[, symbol := code]
-  dt[, .(symbol, date, open, high, low, close, volume)]
-}
-
 # 腾讯代码（上证 6 开头 → sh，其余 → sz）
 tencent_symbol = \(code) paste0(ifelse(substr(code, 1, 1) == "6", "sh", "sz"), code)
 
-# 腾讯日K（主源，稳定；接口每次最多返回 640 行，故按日期倒序分段回取）
-# 复权用 hfq（后复权，长史不会取负）；行格式：date, open, close, high, low, volume
+# 腾讯日K（单一来源，稳定；接口每次最多返回 640 行，故按日期倒序分段回取）
+# 复权按 config.R ADJUST（默认 hfq 后复权，长史不会取负）；行格式：date, open, close, high, low, volume
 fetch_daily_tencent = \(code, from = FROM, to = Sys.Date()) {
   symbol = tencent_symbol(code)
   empty = data.table(
@@ -165,7 +104,7 @@ fetch_daily_tencent = \(code, from = FROM, to = Sys.Date()) {
       get_json(
         "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
         query = list(
-          param = sprintf("%s,day,%s,%s,640,hfq", symbol, as.character(FROM), as.character(end))
+          param = sprintf("%s,day,%s,%s,640,%s", symbol, as.character(FROM), as.character(end), ADJUST)
         ),
         timeout_s = 20,
         simplify = FALSE
