@@ -142,7 +142,6 @@ body, body.dark-mode {
 
 /* 赛博价值卡 */
 .cyber-box {
-  position: relative;
   background: rgba(9,13,22,0.94);
   border: 1px solid var(--accent);
   border-radius: 4px;
@@ -154,18 +153,6 @@ body, body.dark-mode {
   margin-bottom: 18px;
   display: flex;
   flex-direction: column;
-}
-.cyber-box::before {
-  content: ''; position: absolute; top: -1px; left: -1px;
-  width: 14px; height: 14px;
-  border-top: 2px solid var(--accent); border-left: 2px solid var(--accent);
-  filter: drop-shadow(0 0 4px var(--accent));
-}
-.cyber-box::after {
-  content: ''; position: absolute; bottom: -1px; right: -1px;
-  width: 14px; height: 14px;
-  border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent);
-  filter: drop-shadow(0 0 4px var(--accent));
 }
 .cyber-box-value {
   font-size: 24px; font-weight: 600; color: var(--accent);
