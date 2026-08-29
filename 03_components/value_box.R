@@ -12,8 +12,10 @@ inline_sparkline = function(values, color, width = 90, height = 24) {
   x = seq(1, width, length.out = length(v))
   y = height - (v - min_v) / rng * (height - 4) - 2
   pts = paste0(round(x, 1), ",", round(y, 1), collapse = " ")
-  HTML(sprintf('<svg width="%d" height="%d" class="cyber-spark"><polyline points="%s" fill="none" stroke="%s" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>',
-               width, height, pts, color))
+  HTML(sprintf(
+    '<svg width="%d" height="%d" class="cyber-spark"><polyline points="%s" fill="none" stroke="%s" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>',
+    width, height, pts, color
+  ))
 }
 
 change_arrow = function(x) ifelse(x >= 0, "▲", "▼")
@@ -28,9 +30,11 @@ value_box = function(value, label, accent = CYAN, change = NULL, sparkline = NUL
     tags$div(
       class = "cyber-box-foot",
       if (show_change)
-        tags$span(class = "cyber-box-change",
-                  style = paste0("color:", ifelse(change >= 0, RED_UP, GREEN_DOWN), ";"),
-                  HTML(paste0(change_arrow(change), " ", fmt_signed(change)))) else NULL,
+        tags$span(
+          class = "cyber-box-change",
+          style = paste0("color:", ifelse(change >= 0, RED_UP, GREEN_DOWN), ";"),
+          HTML(paste0(change_arrow(change), " ", fmt_signed(change)))
+        ) else NULL,
       if (!is.null(sparkline))
         tags$span(class = "cyber-box-spark", inline_sparkline(sparkline, accent)) else NULL
     )

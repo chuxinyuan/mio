@@ -5,16 +5,26 @@ test_that("init_db 幂等且建全表", {
   init_db(con)
   expect_no_error(init_db(con))
   tables = dbListTables(con)
-  expect_true(all(c("symbol", "daily_bar", "order_ticket", "fill",
-                    "position", "meta", "settings", "account_snapshot",
-                    "sys_log") %in% tables))
+  expect_true(
+    all(c(
+      "symbol", "daily_bar", "order_ticket", "fill",
+      "position", "meta", "settings", "account_snapshot",
+      "sys_log"
+    ) %in% tables)
+  )
   dbDisconnect(con)
 })
 
 test_that("symbol upsert + get", {
   con = new_test_con()
-  upsert_symbols(con, data.table(code = c("600000", "600519"),
-                                 name = c("浦发银行", "贵州茅台"), board = "SSE"))
+  upsert_symbols(
+    con,
+    data.table(
+      code = c("600000", "600519"),
+      name = c("浦发银行", "贵州茅台"),
+      board = "SSE"
+    )
+  )
   got = get_symbols(con)
   expect_equal(nrow(got), 2)
   expect_equal(got[code == "600519"]$name, "贵州茅台")
@@ -78,7 +88,6 @@ test_that("latest_prices 返回每个标的最新收盘", {
   replace_bars(con, "600519", b[symbol == "600519"])
   lp = latest_prices(con)
   expect_equal(sort(lp$symbol), c("600000", "600519"))
-  expect_equal(lp[symbol == "600000"]$price,
-               max(b[symbol == "600000"]$close))
+  expect_equal(lp[symbol == "600000"]$price, max(b[symbol == "600000"]$close))
   dbDisconnect(con)
 })

@@ -29,9 +29,11 @@ ui = dashboardPage(
     )
   ),
   body = dashboardBody(
-    tags$style(HTML(paste0(
-      "@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap');\n",
-      css_vars, "
+    tags$style(
+      HTML(
+        paste0(
+          "@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap');\n",
+          css_vars, "
       body, body.dark-mode {
         background: var(--bg) !important;
         font-family: 'JetBrains Mono', 'Cascadia Code', 'Courier New', monospace !important;
@@ -168,7 +170,10 @@ ui = dashboardPage(
 
       .btn { letter-spacing: 1px; }
       .echarts4r { width: 100%; }
-    "))),
+    "
+        )
+      )
+    ),
     tabItems(
       market_ui("market"),
       strategy_ui("strategy"),

@@ -1,7 +1,7 @@
 # 04_pages/account.server.R — 账户监控
 
 account_server = function(id, con, rv) {
-  moduleServer(id, function(input, output, session) {
+  moduleServer(id, \(input, output, session) {
     ns = session$ns
 
     observe({
@@ -25,11 +25,26 @@ account_server = function(id, con, rv) {
       equity_change = if (length(snaps) >= 2) snaps[length(snaps)] - snaps[length(snaps) - 1] else 0
       fluidRow(
         column(3, value_box(fmt_money(a$cash), "可用资金", MAGENTA)),
-        column(3, value_box(fmt_money(a$equity), "总资产", CYAN,
-                            change = equity_change, sparkline = tail(snaps, 30))),
+        column(
+          3,
+          value_box(
+            fmt_money(a$equity),
+            "总资产",
+            CYAN,
+            change = equity_change,
+            sparkline = tail(snaps, 30)
+          )
+        ),
         column(3, value_box(as.character(nrow(pos)), "持仓数", PURPLE)),
-        column(3, value_box(fmt_signed(pnl), "浮盈亏", ifelse(pnl >= 0, RED_UP, GREEN_DOWN),
-                            change = pnl))
+        column(
+          3,
+          value_box(
+            fmt_signed(pnl),
+            "浮盈亏",
+            ifelse(pnl >= 0, RED_UP, GREEN_DOWN),
+            change = pnl
+          )
+        )
       )
     })
 
@@ -47,10 +62,24 @@ account_server = function(id, con, rv) {
       nm = rv$symbols[, .(symbol = code, name)]
       pos = merge(pos, nm, by = "symbol", all.x = TRUE)
       pos[, pnl := round((price - avg_cost) * qty, 2)]
-      datatable(pos[, .(symbol, name, qty, avail_qty, avg_cost = round(avg_cost, 2),
-                        price, market_value = round(market_value, 2), pnl)],
-                colnames = c("代码", "名称", "持仓", "可卖", "成本", "现价", "市值", "浮盈亏"),
-                rownames = FALSE, options = list(dom = "t", pageLength = 10)) |>
+      datatable(
+        pos[, .(
+          symbol,
+          name,
+          qty,
+          avail_qty,
+          avg_cost = round(avg_cost, 2),
+          price,
+          market_value = round(market_value, 2),
+          pnl
+        )],
+        colnames = c(
+          "代码", "名称", "持仓", "可卖",
+          "成本", "现价", "市值", "浮盈亏"
+        ),
+        rownames = FALSE,
+        options = list(dom = "t", pageLength = 10)
+      ) |>
         formatStyle("pnl", color = styleInterval(0, c(GREEN_DOWN, RED_UP)))
     })
   })

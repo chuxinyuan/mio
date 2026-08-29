@@ -23,11 +23,20 @@ test_that("make_return 首行全 NA、行数一致", {
 test_that("simulate 基本不变量：无负持仓/现金、equity 有限且非负", {
   data = build("A", 40)
   sig = make_signals(data$close, data$return, 3, 5, 4, 0.3)
-  res = simulate(open_mat = data$open, close_mat = data$close,
-                 entry = sig$entry, exit = sig$exit, favor = sig$favor,
-                 max_lookback = 6, max_assets = 2, starting_cash = 100000,
-                 slip_factor = 0, spread_adjust = 0, flat_commission = 0,
-                 per_share_commission = 0)
+  res = simulate(
+    open_mat = data$open,
+    close_mat = data$close,
+    entry = sig$entry,
+    exit = sig$exit,
+    favor = sig$favor,
+    max_lookback = 6,
+    max_assets = 2,
+    starting_cash = 100000,
+    slip_factor = 0,
+    spread_adjust = 0,
+    flat_commission = 0,
+    per_share_commission = 0
+  )
   qty = as.numeric(res$pos_qty)
   cash = as.numeric(res$cash)
   eq = res$equity[!is.na(res$equity)]
@@ -41,11 +50,20 @@ test_that("simulate 基本不变量：无负持仓/现金、equity 有限且非�
 test_that("simulate 收到信号会产生交易", {
   data = build(c("A", "B", "C"), 80)
   sig = make_signals(data$close, data$return, 5, 8, 6, 0.5)
-  res = simulate(open_mat = data$open, close_mat = data$close,
-                 entry = sig$entry, exit = sig$exit, favor = sig$favor,
-                 max_lookback = 9, max_assets = 3, starting_cash = 100000,
-                 slip_factor = 0.001, spread_adjust = 0.01,
-                 flat_commission = 3.5, per_share_commission = 0)
+  res = simulate(
+    open_mat = data$open,
+    close_mat = data$close,
+    entry = sig$entry,
+    exit = sig$exit,
+    favor = sig$favor,
+    max_lookback = 9,
+    max_assets = 3,
+    starting_cash = 100000,
+    slip_factor = 0.001,
+    spread_adjust = 0.01,
+    flat_commission = 3.5,
+    per_share_commission = 0
+  )
   expect_true(sum(as.numeric(res$pos_qty) > 0) > 0, info = "应发生过建仓")
 })
 
@@ -60,7 +78,11 @@ test_that("calc_metrics 已知单调上行序列", {
 
 test_that("evaluate 返回标量（transform=FALSE）", {
   data = build(c("A", "B", "C"), 60)
-  out = evaluate(data, c(n1 = 5, n_fact = 1.6, n_sharpe = 6, sh_thresh = 0.5),
-                 year = 2023, transform = FALSE)
+  out = evaluate(
+    data,
+    c(n1 = 5, n_fact = 1.6, n_sharpe = 6, sh_thresh = 0.5),
+    year = 2023,
+    transform = FALSE
+  )
   expect_true(is.numeric(out) && length(out) == 1)
 })

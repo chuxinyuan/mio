@@ -23,28 +23,51 @@ exit_func = function(v) {
 
 # 由宽矩阵 close_mat / return_mat 生成 entry / exit / favor
 make_signals = function(close_mat, return_mat, n1, n2, n_sharpe, sh_thresh) {
-  indic = zoo(runmean(close_mat, n1, endrule = "NA", align = "right") -
-                runmean(close_mat, n2, endrule = "NA", align = "right"),
-              order.by = index(close_mat))
+  indic = zoo(
+    runmean(close_mat, n1, endrule = "NA", align = "right") -
+      runmean(close_mat, n2, endrule = "NA", align = "right"),
+    order.by = index(close_mat)
+  )
   names(indic) = names(close_mat)
 
-  r_mean = zoo(runmean(return_mat, n1, endrule = "NA", align = "right"),
-               order.by = index(return_mat))
-  favor = r_mean / runmean((return_mat - r_mean)^2, n_sharpe, endrule = "NA", align = "right")
+  r_mean = zoo(
+    runmean(return_mat, n1, endrule = "NA", align = "right"),
+    order.by = index(return_mat)
+  )
+  favor = r_mean / runmean(
+    (return_mat - r_mean)^2,
+    n_sharpe,
+    endrule = "NA",
+    align = "right"
+  )
   names(favor) = names(close_mat)
 
-  entry = rollapply(cbind(indic, favor),
-                    FUN = function(v) entry_func(v, sh_thresh),
-                    width = 2, fill = NA, align = "right", by.column = FALSE)
-  exit = rollapply(cbind(indic, favor),
-                   FUN = function(v) exit_func(v),
-                   width = 2, fill = NA, align = "right", by.column = FALSE)
+  entry = rollapply(
+    cbind(indic, favor),
+    FUN = \(v) entry_func(v, sh_thresh),
+    width = 2,
+    fill = NA,
+    align = "right",
+    by.column = FALSE
+  )
+  exit = rollapply(
+    cbind(indic, favor),
+    FUN = \(v) exit_func(v),
+    width = 2,
+    fill = NA,
+    align = "right",
+    by.column = FALSE
+  )
 
   # 统一为与 close_mat 同型的矩阵并设置列名（单标的时 rollapply 会退化为向量）
-  entry = zoo(matrix(as.numeric(entry), ncol = ncol(close_mat)),
-              order.by = index(close_mat))
-  exit = zoo(matrix(as.numeric(exit), ncol = ncol(close_mat)),
-             order.by = index(close_mat))
+  entry = zoo(
+    matrix(as.numeric(entry), ncol = ncol(close_mat)),
+    order.by = index(close_mat)
+  )
+  exit = zoo(
+    matrix(as.numeric(exit), ncol = ncol(close_mat)),
+    order.by = index(close_mat)
+  )
   names(entry) = names(exit) = names(close_mat)
 
   list(entry = entry, exit = exit, favor = favor)
@@ -52,7 +75,14 @@ make_signals = function(close_mat, return_mat, n1, n2, n_sharpe, sh_thresh) {
 
 # 最新一期的信号（今日建议）：entry==1 的标的按 favor 降序
 latest_signals = function(data, n1, n2, n_sharpe, sh_thresh) {
-  sig = make_signals(data$close, data$return, n1, n2, n_sharpe, sh_thresh)
+  sig = make_signals(
+    data$close,
+    data$return,
+    n1,
+    n2,
+    n_sharpe,
+    sh_thresh
+  )
   entry = as.numeric(sig$entry[nrow(sig$entry), ])
   favor = as.numeric(sig$favor[nrow(sig$favor), ])
   dt = data.table(symbol = names(data$close), entry = entry, favor = favor)

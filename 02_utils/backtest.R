@@ -18,14 +18,21 @@ prepare_data = function(bars) {
     m = as.matrix(d[, -1, drop = FALSE])
     zoo(m, order.by = as.Date(d$date))
   }
-  list(close = w("close"), open = w("open"),
-       high = w("high"), low = w("low"), volume = w("volume"))
+  list(
+    close = w("close"),
+    open = w("open"),
+    high = w("high"),
+    low = w("low"),
+    volume = w("volume")
+  )
 }
 
 # 沿用原书 return.R 口径：return_mat = close_mat / lag(close_mat, -1) - 1（首行 NA）
 make_return = function(close_mat) {
-  na_pad = zoo(matrix(NA, nrow = 1, ncol = ncol(close_mat)),
-               order.by = index(close_mat)[1])
+  na_pad = zoo(
+    matrix(NA, nrow = 1, ncol = ncol(close_mat)),
+    order.by = index(close_mat)[1]
+  )
   names(na_pad) = names(close_mat)
   rbind(na_pad, (close_mat / lag(close_mat, k = -1)) - 1)
 }
@@ -40,45 +47,85 @@ equ_na = function(v) {
   ifelse(is.na(o), length(v) + 1, o)
 }
 
-simulate = function(open_mat, close_mat, entry, exit, favor,
-                    max_lookback, max_assets, starting_cash,
-                    slip_factor, spread_adjust, flat_commission, per_share_commission,
-                    verbose = FALSE, fail_thresh = 0,
-                    init_pos = NULL, init_price = NULL) {
+simulate = function(
+  open_mat,
+  close_mat,
+  entry,
+  exit,
+  favor,
+  max_lookback,
+  max_assets,
+  starting_cash,
+  slip_factor,
+  spread_adjust,
+  flat_commission,
+  per_share_commission,
+  verbose = FALSE,
+  fail_thresh = 0,
+  init_pos = NULL,
+  init_price = NULL
+) {
 
-  if (any(dim(entry) != dim(exit)) | any(dim(exit) != dim(favor)) |
-      any(dim(favor) != dim(close_mat)) | any(dim(close_mat) != dim(open_mat)))
+  if (
+    any(dim(entry) != dim(exit)) |
+    any(dim(exit) != dim(favor)) |
+    any(dim(favor) != dim(close_mat)) |
+    any(dim(close_mat) != dim(open_mat))
+  )
     stop("Mismatching dimensions in entry, exit, favor, close_mat, or open_mat.")
 
-  if (any(names(entry) != names(exit)) | any(names(exit) != names(favor)) |
-      any(names(favor) != names(close_mat)) | any(names(close_mat) != names(open_mat)) |
-      is.null(names(entry)) | is.null(names(exit)) | is.null(names(favor)) |
-      is.null(names(close_mat)) | is.null(names(open_mat)))
+  if (
+    any(names(entry) != names(exit)) |
+    any(names(exit) != names(favor)) |
+    any(names(favor) != names(close_mat)) |
+    any(names(close_mat) != names(open_mat)) |
+    is.null(names(entry)) |
+    is.null(names(exit)) |
+    is.null(names(favor)) |
+    is.null(names(close_mat)) |
+    is.null(names(open_mat))
+  )
     stop("Mismatching or missing column names in entry, exit, favor, close_mat, or open_mat.")
 
-  favor = zoo(replace(as.matrix(favor), is.na(as.matrix(favor)), 0),
-              order.by = index(close_mat))
+  favor = zoo(
+    replace(as.matrix(favor), is.na(as.matrix(favor)), 0),
+    order.by = index(close_mat)
+  )
   names(favor) = names(close_mat)
 
   n_pos = 0
   cash_vec = rep(starting_cash, times = nrow(close_mat))
   syms = names(close_mat)
 
-  pos_qty = entry_price = zoo(matrix(0, ncol = ncol(close_mat), nrow = nrow(close_mat)),
-                              order.by = index(close_mat))
+  pos_qty = entry_price = zoo(
+    matrix(0, ncol = ncol(close_mat), nrow = nrow(close_mat)),
+    order.by = index(close_mat)
+  )
 
   if (!is.null(init_pos) & !is.null(init_price)) {
-    pos_qty[1:max_lookback, ] = matrix(init_pos, ncol = length(init_pos), nrow = max_lookback, byrow = TRUE)
-    entry_price[1:max_lookback, ] = matrix(init_price, ncol = length(init_price), nrow = max_lookback, byrow = TRUE)
+    pos_qty[1:max_lookback, ] = matrix(
+      init_pos,
+      ncol = length(init_pos),
+      nrow = max_lookback,
+      byrow = TRUE
+    )
+    entry_price[1:max_lookback, ] = matrix(
+      init_price,
+      ncol = length(init_price),
+      nrow = max_lookback,
+      byrow = TRUE
+    )
   }
 
   names(pos_qty) = names(entry_price) = syms
 
   equity = rep(NA, nrow(close_mat))
 
-  rm_na = pmax(unlist(lapply(favor, equ_na)),
-               unlist(lapply(entry, equ_na)),
-               unlist(lapply(exit, equ_na)))
+  rm_na = pmax(
+    unlist(lapply(favor, equ_na)),
+    unlist(lapply(entry, equ_na)),
+    unlist(lapply(exit, equ_na))
+  )
 
   for (j in 1:ncol(entry)) {
     to_rm = rm_na[j]
@@ -213,9 +260,17 @@ simulate = function(open_mat, close_mat, entry, exit, favor,
 # 评估（沿袭原书 evaluate）
 # ------------------------------
 
-evaluate = function(data, param, year, settings = NULL,
-                    transform = TRUE, negative = FALSE,
-                    transform_only = FALSE, return_data = FALSE, account_params = NULL) {
+evaluate = function(
+  data,
+  param,
+  year,
+  settings = NULL,
+  transform = TRUE,
+  negative = FALSE,
+  transform_only = FALSE,
+  return_data = FALSE,
+  account_params = NULL
+) {
 
   if (is.null(settings)) settings = default_settings()
 
@@ -233,11 +288,11 @@ evaluate = function(data, param, year, settings = NULL,
   max_lookback = max(n1, n2, n_sharpe) + 1
 
   period = index(data$close) >= as.Date(paste0(year[1], "-01-01")) &
-           index(data$close) <  as.Date(paste0(year[length(year)] + 1, "-01-01"))
+    index(data$close) < as.Date(paste0(year[length(year)] + 1, "-01-01"))
 
   period = period |
     ((1:nrow(data$close) > (which(period)[1] - max_lookback)) &
-     (1:nrow(data$close) <= (which(period)[sum(period)]) + 1))
+       (1:nrow(data$close) <= (which(period)[sum(period)]) + 1))
 
   close_mat = data$close[period, ]
   open_mat  = data$open[period, ]
@@ -245,14 +300,21 @@ evaluate = function(data, param, year, settings = NULL,
 
   sig = make_signals(close_mat, sub_return, n1, n2, n_sharpe, sh_thresh)
 
-  args = list(open_mat = open_mat, close_mat = close_mat,
-              entry = sig$entry, exit = sig$exit, favor = sig$favor,
-              max_lookback = max_lookback, max_assets = max_assets,
-              slip_factor = settings$slip_factor,
-              spread_adjust = settings$spread_adjust,
-              flat_commission = settings$flat_commission,
-              per_share_commission = settings$per_share_commission,
-              verbose = FALSE, fail_thresh = 0)
+  args = list(
+    open_mat = open_mat,
+    close_mat = close_mat,
+    entry = sig$entry,
+    exit = sig$exit,
+    favor = sig$favor,
+    max_lookback = max_lookback,
+    max_assets = max_assets,
+    slip_factor = settings$slip_factor,
+    spread_adjust = settings$spread_adjust,
+    flat_commission = settings$flat_commission,
+    per_share_commission = settings$per_share_commission,
+    verbose = FALSE,
+    fail_thresh = 0
+  )
 
   if (!is.null(account_params)) {
     args$starting_cash = account_params[["cash"]]
@@ -299,6 +361,11 @@ calc_metrics = function(equity, dates = NULL) {
   sharpe = mean(ret) / sd(ret) * sqrt(252)
   dd = v / cummax(v) - 1
   mdd = min(dd)
-  list(total_return = total, annualized = ann, sharpe = sharpe,
-       max_drawdown = mdd, n_days = n)
+  list(
+    total_return = total,
+    annualized = ann,
+    sharpe = sharpe,
+    max_drawdown = mdd,
+    n_days = n
+  )
 }

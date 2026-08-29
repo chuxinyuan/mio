@@ -20,14 +20,24 @@ test_that("secid 上交所前缀", {
 
 test_that("parse_realtime_batch 字段映射与单位（clist fltt=2）", {
   diff = data.frame(
-    f12 = c("600000", "600519"), f14 = c("浦发银行", "贵州茅台"),
-    f2 = c(10.5, 1500.25), f3 = c(1.2, -0.5), f4 = c(0.12, -7.5),
-    f5 = c(100000, 20000), f6 = c(1e6, 3e7),
-    f15 = c(10.8, 1510), f16 = c(10.2, 1490), f17 = c(10.3, 1505),
-    stringsAsFactors = FALSE)
+    f12 = c("600000", "600519"),
+    f14 = c("浦发银行", "贵州茅台"),
+    f2 = c(10.5, 1500.25),
+    f3 = c(1.2, -0.5),
+    f4 = c(0.12, -7.5),
+    f5 = c(100000, 20000),
+    f6 = c(1e6, 3e7),
+    f15 = c(10.8, 1510),
+    f16 = c(10.2, 1490),
+    f17 = c(10.3, 1505),
+    stringsAsFactors = FALSE
+  )
   dt = parse_realtime_batch(diff)
-  expect_named(dt, c("code", "name", "price", "open", "high", "low",
-                     "volume", "amount", "change", "pct"))
+  expect_named(
+    dt,
+    c("code", "name", "price", "open", "high", "low",
+      "volume", "amount", "change", "pct")
+  )
   expect_equal(dt$code, c("600000", "600519"))
   expect_equal(dt$price, c(10.5, 1500.25))
   expect_equal(dt$open, c(10.3, 1505))

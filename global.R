@@ -39,7 +39,7 @@ source("04_pages/settings.server.R")
 con = connect_db()
 init_db(con)
 init_account(con)
-onStop(function() try(dbDisconnect(con), silent = TRUE))
+onStop(\() try(dbDisconnect(con), silent = TRUE))
 
 # 共享响应式状态
 rv = reactiveValues(

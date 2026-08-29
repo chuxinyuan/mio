@@ -34,8 +34,12 @@ new_test_con = function() {
 }
 
 # 确定性合成行情：n_days 个工作日 × syms 个标的
-synthetic_bars = function(syms = c("600000", "600519", "601318", "600036"),
-                          n_days = 60, start = "2023-01-03", seed = 1) {
+synthetic_bars = function(
+  syms = c("600000", "600519", "601318", "600036"),
+  n_days = 60,
+  start = "2023-01-03",
+  seed = 1
+) {
   set.seed(seed)
   n = length(syms)
   drift = seq(0.0005, 0.003, length.out = n)

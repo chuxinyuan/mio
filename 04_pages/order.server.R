@@ -1,7 +1,7 @@
 # 04_pages/order.server.R — 订单管理
 
 order_server = function(id, con, rv) {
-  moduleServer(id, function(input, output, session) {
+  moduleServer(id, \(input, output, session) {
     ns = session$ns
 
     observe({
@@ -12,8 +12,11 @@ order_server = function(id, con, rv) {
     observe({
       invalidateLater(5000, session)
       open_ids = get_orders(con, status = "open")$id
-      updateSelectInput(session, "cancel_id",
-                        choices = if (length(open_ids)) open_ids else character(0))
+      updateSelectInput(
+        session,
+        "cancel_id",
+        choices = if (length(open_ids)) open_ids else character(0)
+      )
     })
 
     observeEvent(input$submit, {
@@ -42,21 +45,29 @@ order_server = function(id, con, rv) {
       o = get_orders(con)
       if (nrow(o) > 0) {
         o[, side := fifelse(side == "buy", "买入", "卖出")]
-        o[, status := fcase(status == "open", "未成交",
-                            status == "filled", "已成交",
-                            status == "cancelled", "已撤销",
-                            default = status)]
+        o[, status := fcase(
+          status == "open", "未成交",
+          status == "filled", "已成交",
+          status == "cancelled", "已撤销",
+          default = status
+        )]
       }
-      datatable(o, rownames = FALSE,
-                colnames = c("单号", "时间", "标的", "方向", "数量", "价格", "状态"),
-                options = list(pageLength = 10))
+      datatable(
+        o,
+        rownames = FALSE,
+        colnames = c("单号", "时间", "标的", "方向", "数量", "价格", "状态"),
+        options = list(pageLength = 10)
+      )
     })
 
     output$fills = renderDT({
       invalidateLater(5000, session)
-      datatable(get_fills(con), rownames = FALSE,
-                colnames = c("成交号", "订单号", "时间", "价格", "数量"),
-                options = list(pageLength = 10))
+      datatable(
+        get_fills(con),
+        rownames = FALSE,
+        colnames = c("成交号", "订单号", "时间", "价格", "数量"),
+        options = list(pageLength = 10)
+      )
     })
   })
 }

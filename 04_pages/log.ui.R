@@ -4,9 +4,14 @@ log_ui = function(id) {
   ns = NS(id)
   tabItem(
     tabName = "log",
-    box(title = "系统日志", width = 12, status = "primary", solidHeader = TRUE,
-        DTOutput(ns("log_table")),
-        br(),
-        actionButton(ns("clear"), "清空日志", status = "danger"))
+    box(
+      title = "系统日志",
+      width = 12,
+      status = "primary",
+      solidHeader = TRUE,
+      DTOutput(ns("log_table")),
+      br(),
+      actionButton(ns("clear"), "清空日志", status = "danger")
+    )
   )
 }

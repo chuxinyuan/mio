@@ -1,7 +1,7 @@
 # 04_pages/settings.server.R — 设置
 
 settings_server = function(id, con, rv) {
-  moduleServer(id, function(input, output, session) {
+  moduleServer(id, \(input, output, session) {
     ns = session$ns
 
     fill_inputs = function(s) {

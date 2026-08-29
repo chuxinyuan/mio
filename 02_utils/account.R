@@ -56,8 +56,14 @@ rollover_positions = function(con, date = Sys.Date()) {
 }
 
 # 下单（校验：100 股整数倍、现金/可卖数量充足、涨跌停价）
-place_order = function(con, symbol, side, qty, price = NA_real_,
-                       ts = format(Sys.time(), "%Y-%m-%d %H:%M:%S")) {
+place_order = function(
+  con,
+  symbol,
+  side,
+  qty,
+  price = NA_real_,
+  ts = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+) {
   settings = load_settings(con)
   qty = as.integer(qty)
   if (is.na(qty) || qty <= 0) return(list(ok = FALSE, msg = "数量无效"))
@@ -81,9 +87,17 @@ place_order = function(con, symbol, side, qty, price = NA_real_,
   }
 
   id = save_order(con, ts, symbol, side, qty, price)
-  write_log(con, sprintf("下单 %s %s %d 股 @ %s", side, symbol, qty,
-                         ifelse(is.na(price), "市价", as.character(price))),
-            "info", "account", ts)
+  write_log(
+    con,
+    sprintf(
+      "下单 %s %s %d 股 @ %s",
+      side, symbol, qty,
+      ifelse(is.na(price), "市价", as.character(price))
+    ),
+    "info",
+    "account",
+    ts
+  )
   list(ok = TRUE, id = id)
 }
 
@@ -94,8 +108,11 @@ cancel_order = function(con, id) {
 }
 
 # 撮合所有 open 订单（price_map: named vector，symbol -> 成交价）
-match_orders = function(con, price_map,
-                        ts = format(Sys.time(), "%Y-%m-%d %H:%M:%S")) {
+match_orders = function(
+  con,
+  price_map,
+  ts = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+) {
   settings = load_settings(con)
   orders = get_orders(con, status = "open")
   if (nrow(orders) == 0) return(invisible(NULL))
@@ -133,15 +150,26 @@ match_orders = function(con, price_map,
       cash = cash + amount - fee
       n_qty = pos$qty - o$qty
       n_avail = pos$avail_qty - o$qty
-      if (n_qty <= 0) dbExecute(con, "DELETE FROM position WHERE symbol = :symbol",
-                                list(symbol = o$symbol))
-      else upsert_position(con, o$symbol, n_qty, n_avail, pos$avg_cost)
+      if (n_qty <= 0) {
+        dbExecute(
+          con,
+          "DELETE FROM position WHERE symbol = :symbol",
+          list(symbol = o$symbol)
+        )
+      } else {
+        upsert_position(con, o$symbol, n_qty, n_avail, pos$avg_cost)
+      }
     }
 
     save_fill(con, o$id, ts, px, o$qty)
     set_order_status(con, o$id, "filled")
-    write_log(con, sprintf("成交 %s %s %d 股 @ %.2f", o$side, o$symbol, o$qty, px),
-              "info", "account", ts)
+    write_log(
+      con,
+      sprintf("成交 %s %s %d 股 @ %.2f", o$side, o$symbol, o$qty, px),
+      "info",
+      "account",
+      ts
+    )
   }
 
   px_all = price_map[get_positions(con)$symbol]
@@ -190,8 +218,17 @@ compute_trades = function(data, n1, n2, n_sharpe, sh_thresh, held, max_assets) {
 }
 
 # 按信号自动下单：卖出持仓中应退出的，买入信号中应进场的（等权分配现金）
-auto_trade = function(con, data, n1, n2, n_sharpe, sh_thresh, max_assets,
-                      prices, ts = format(Sys.time(), "%Y-%m-%d %H:%M:%S")) {
+auto_trade = function(
+  con,
+  data,
+  n1,
+  n2,
+  n_sharpe,
+  sh_thresh,
+  max_assets,
+  prices,
+  ts = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+) {
   held = get_positions(con)[qty > 0]$symbol
   tr = compute_trades(data, n1, n2, n_sharpe, sh_thresh, held, max_assets)
 

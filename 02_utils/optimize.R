@@ -66,6 +66,10 @@ optimize_params = function(data, year) {
   }
 
   # 返回未变换（实际）参数
-  evaluate(data, optim_df[which.min(optim_df$obj), 1:np],
-           year = year, transform_only = TRUE)
+  evaluate(
+    data,
+    optim_df[which.min(optim_df$obj), 1:np],
+    year = year,
+    transform_only = TRUE
+  )
 }
