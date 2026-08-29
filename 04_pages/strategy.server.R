@@ -5,6 +5,16 @@ strategy_server = \(id, con, rv) {
     ns = session$ns
     optimizing = reactiveVal(FALSE)
 
+    # 非交易时段：自动下单属于交易动作，锁死
+    observe({
+      tick(5000, session)
+      if (in_trading_hours()) {
+        shinyjs::enable("auto_trade")
+      } else {
+        shinyjs::disable("auto_trade")
+      }
+    })
+
     params = reactive({
       list(
         param = c(

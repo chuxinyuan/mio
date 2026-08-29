@@ -58,6 +58,8 @@ test_that("match_orders 单笔买入手算断言", {
   expect_equal(nrow(fills), 1)
   expect_equal(fills$price, px)
   expect_equal(fills$qty, qty)
+  expect_equal(fills$symbol, "600000")
+  expect_equal(fills$side, "buy")
 
   pos = get_positions(con)[symbol == "600000"]
   expect_equal(pos$qty, qty)

@@ -253,7 +253,15 @@ get_orders = \(con, status = NULL) {
   ))
 }
 
-get_fills = \(con) as.data.table(dbGetQuery(con, "SELECT * FROM fill"))
+get_fills = \(con) {
+  as.data.table(dbGetQuery(
+    con,
+    "SELECT f.id, f.order_id, f.ts, f.price, f.qty, o.symbol, o.side
+     FROM fill f
+     JOIN order_ticket o ON f.order_id = o.id
+     ORDER BY f.id DESC"
+  ))
+}
 
 # ---- position ----
 upsert_position = \(con, symbol, qty, avail_qty, avg_cost) {

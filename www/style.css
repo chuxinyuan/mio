@@ -298,8 +298,32 @@ table.dataTable.hover tbody tr:hover { background: rgba(0,240,255,0.08) !importa
   height: 100%;
 }
 
-/* 策略页按钮：统一霓虹风（青→紫渐变、描边发光） */
-.strat-btns .btn {
+/* 订单页：下单框与当前订单框高度对齐，表单字段纵向均匀铺满 */
+#shiny-tab-order .col-sm-4 > .card,
+#shiny-tab-order .col-sm-8 > .card {
+  height: 100%;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+#shiny-tab-order .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+#shiny-tab-order .cyber-btns {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+/* 成交回报与上方区块之间留出间距 */
+#shiny-tab-order > .row + .row {
+  margin-top: 20px;
+}
+
+/* 霓虹按钮组（策略/下单等页共用）：青→紫渐变、描边发光 */
+.cyber-btns .btn {
   width: 100% !important;
   margin-top: 10px;
   background: linear-gradient(135deg, rgba(0,240,255,0.14), rgba(180,77,255,0.10)) !important;
@@ -312,14 +336,14 @@ table.dataTable.hover tbody tr:hover { background: rgba(0,240,255,0.08) !importa
   border-radius: 3px;
   transition: box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
-.strat-btns .btn:first-child {
+.cyber-btns .btn:first-child {
   margin-top: 0;
 }
-.strat-btns .btn:hover {
+.cyber-btns .btn:hover {
   background: rgba(0,240,255,0.20) !important;
   color: #ffffff !important;
   box-shadow: 0 0 22px rgba(0,240,255,0.5), inset 0 0 16px rgba(0,240,255,0.10);
 }
-.strat-btns .btn:active {
+.cyber-btns .btn:active {
   transform: translateY(1px);
 }

@@ -10,40 +10,43 @@ order_ui = \(id) {
         width = 4,
         status = "danger",
         solidHeader = TRUE,
-        selectInput(ns("sym"), "标的", choices = NULL),
-        selectInput(
-          ns("side"),
-          "方向",
-          choices = c("买入" = "buy", "卖出" = "sell")
-        ),
-        numericInput(
-          ns("qty"),
-          "数量（股，100 整数倍）",
-          value = 100,
-          min = 100,
-          step = 100
-        ),
-        textInput(ns("price"), "限价（留空=市价）", value = ""),
-        actionButton(
-          ns("submit"),
-          "提交订单",
-          status = "primary",
-          width = "100%"
-        ),
-        br(), br(),
-        actionButton(
-          ns("match"),
-          "撮合未成交订单（按最新价）",
-          icon = icon("check"),
-          width = "100%"
-        ),
-        br(), br(),
-        selectInput(ns("cancel_id"), "撤单订单（未成交）", choices = NULL),
-        actionButton(
-          ns("cancel"),
-          "撤销订单",
-          status = "warning",
-          width = "100%"
+        div(
+          class = "cyber-btns",
+          selectInput(ns("sym"), "标的", choices = NULL),
+          selectInput(
+            ns("side"),
+            "方向",
+            choices = c("买入" = "buy", "卖出" = "sell")
+          ),
+          numericInput(
+            ns("qty"),
+            "数量（股）",
+            value = 100,
+            min = 100,
+            step = 100
+          ),
+          textInput(ns("price"), "价格", value = ""),
+          actionButton(
+            ns("submit"),
+            "提交订单",
+            status = "info",
+            width = "100%"
+          ),
+          actionButton(
+            ns("match"),
+            "撮合订单",
+            status = "info",
+            width = "100%"
+          ),
+          br(),
+          br(),
+          selectInput(ns("cancel_id"), "撤单订单", choices = NULL),
+          actionButton(
+            ns("cancel"),
+            "撤销订单",
+            status = "info",
+            width = "100%"
+          )
         )
       ),
       box(
@@ -52,7 +55,9 @@ order_ui = \(id) {
         status = "primary",
         solidHeader = TRUE,
         DTOutput(ns("orders"))
-      ),
+      )
+    ),
+    fluidRow(
       box(
         title = "成交回报",
         width = 12,

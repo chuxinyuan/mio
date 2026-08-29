@@ -49,7 +49,7 @@ strategy_ui = \(id) {
             max = 2024
           ),
           tags$div(
-            class = "strat-btns",
+            class = "cyber-btns",
             actionButton(
               ns("run_bt"),
               "运行回测",
