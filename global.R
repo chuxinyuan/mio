@@ -23,6 +23,7 @@ suppressMessages(source("02_utils/indicators.R"))
 suppressMessages(source("02_utils/backtest.R"))
 suppressMessages(source("02_utils/optimize.R"))
 suppressMessages(source("02_utils/account.R"))
+suppressMessages(source("02_utils/market_time.R"))
 source("03_components/charts.R")
 source("03_components/value_box.R")
 

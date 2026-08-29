@@ -5,7 +5,7 @@ account_server = \(id, con, rv) {
     ns = session$ns
 
     observe({
-      invalidateLater(5000, session)
+      tick(5000, session)
       req(nrow(rv$bars) > 0)
       rollover_positions(con, max(rv$bars$date))
     })
@@ -15,7 +15,7 @@ account_server = \(id, con, rv) {
     })
 
     output$kpis = renderUI({
-      invalidateLater(5000, session)
+      tick(5000, session)
       a = acct()
       pos = a$positions
       pos_value = sum(pos$market_value, na.rm = TRUE)
@@ -49,14 +49,14 @@ account_server = \(id, con, rv) {
     })
 
     output$equity_curve = renderEcharts4r({
-      invalidateLater(5000, session)
+      tick(5000, session)
       s = get_snapshots(con)
       if (nrow(s) < 2) s = rbind(s, s)
       equity_chart(s[, .(ts, equity)])
     })
 
     output$positions = renderDT({
-      invalidateLater(5000, session)
+      tick(5000, session)
       pos = acct()$positions
       if (nrow(pos) == 0) return(datatable(data.table()))
       nm = rv$symbols[, .(symbol = code, name)]

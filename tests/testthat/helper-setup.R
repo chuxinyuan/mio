@@ -23,6 +23,7 @@ suppressMessages({
   source("02_utils/indicators.R")
   source("02_utils/backtest.R")
   source("02_utils/account.R")
+  source("02_utils/market_time.R")
 })
 
 # 临时 SQLite 连接（已 init_db + init_account，初始现金 = STARTING_CASH）

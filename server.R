@@ -1,9 +1,18 @@
 # server.R — 服务端
 
 server = \(input, output, session) {
+  last_quote = reactiveVal(NULL)
+
+  observe({
+    tick(15000, session)
+    if (in_trading_hours() || is.null(last_quote())) {
+      q = tryCatch(fetch_index(), error = \(e) NULL)
+      if (!is.null(q) && nrow(q) > 0) last_quote(q)
+    }
+  })
+
   output$nav_quotes = renderUI({
-    invalidateLater(15000, session)
-    q = tryCatch(fetch_index(), error = \(e) NULL)
+    q = last_quote()
     date_txt = format(Sys.Date(), "%Y-%m-%d")
     if (is.null(q) || nrow(q) == 0 || is.na(q$change)) {
       return(

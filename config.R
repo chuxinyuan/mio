@@ -27,6 +27,13 @@ BOARD    = "SSE"              # 交易所：上交所
 EM_HOST       = "http://push2.eastmoney.com"
 EM_HOST_DELAY = "http://push2delay.eastmoney.com"
 
+# 交易时段（A股，周一至周五）：收盘后页面刷新降为静默探底，次日开盘自动恢复
+TRADING_START_AM = "09:30"
+TRADING_END_AM   = "11:30"
+TRADING_START_PM = "13:00"
+TRADING_END_PM   = "15:00"
+MARKET_WATCH_MS  = 60000    # 收盘后静默探测间隔（毫秒）
+
 # 交易/账户（默认值，可在 App 设置页覆盖并持久化）
 STARTING_CASH        = 100000
 SLIP_FACTOR          = 0.001

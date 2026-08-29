@@ -10,7 +10,7 @@ order_server = \(id, con, rv) {
     })
 
     observe({
-      invalidateLater(5000, session)
+      tick(5000, session)
       open_ids = get_orders(con, status = "open")$id
       updateSelectInput(
         session,
@@ -41,7 +41,7 @@ order_server = \(id, con, rv) {
     })
 
     output$orders = renderDT({
-      invalidateLater(5000, session)
+      tick(5000, session)
       o = get_orders(con)
       if (nrow(o) > 0) {
         o[, side := fifelse(side == "buy", "买入", "卖出")]
@@ -61,7 +61,7 @@ order_server = \(id, con, rv) {
     })
 
     output$fills = renderDT({
-      invalidateLater(5000, session)
+      tick(5000, session)
       datatable(
         get_fills(con),
         rownames = FALSE,

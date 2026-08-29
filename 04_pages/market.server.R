@@ -43,15 +43,15 @@ market_server = \(id, con, rv) {
       kline_chart(kline())
     })
 
-    rt = reactivePoll(
-      intervalMillis = 10000,
-      session,
-      checkFunc = \() Sys.time(),
-      valueFunc = \() {
-        req(nrow(rv$symbols) > 0)
-        tryCatch(fetch_realtime(rv$symbols$code), error = \(e) data.table())
+    rt = reactiveVal(data.table())
+    rt_init = reactiveVal(FALSE)
+    observe({
+      tick(10000, session)
+      if ((in_trading_hours() || isFALSE(rt_init())) && nrow(rv$symbols) > 0) {
+        rt(tryCatch(fetch_realtime(rv$symbols$code), error = \(e) data.table()))
+        rt_init(TRUE)
       }
-    )
+    })
 
     output$rt_table = renderDT({
       d = rt()

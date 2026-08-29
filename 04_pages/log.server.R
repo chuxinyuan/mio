@@ -9,7 +9,7 @@ log_server = \(id, con, rv) {
     })
 
     output$log_table = renderDT({
-      invalidateLater(5000, session)
+      tick(5000, session)
       datatable(
         get_logs(con, limit = 300),
         rownames = FALSE,
