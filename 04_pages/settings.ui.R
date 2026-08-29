@@ -54,8 +54,11 @@ settings_ui = \(id) {
         step = 0.001
       ),
       br(),
-      actionButton(ns("save"), "保存设置", status = "primary"),
-      actionButton(ns("reset"), "恢复默认", status = "primary")
+      div(
+        class = "cyber-btns",
+        actionButton(ns("save"), "保存设置", status = "info", width = "100%"),
+        actionButton(ns("reset"), "恢复默认", status = "info", width = "100%")
+      )
     )
   )
 }

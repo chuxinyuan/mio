@@ -11,7 +11,16 @@ log_ui = \(id) {
       solidHeader = TRUE,
       DTOutput(ns("log_table")),
       br(),
-      actionButton(ns("clear"), "清空日志", status = "danger")
+      div(
+        class = "log-clear-wrap",
+        actionButton(
+          ns("clear"),
+          "清空日志",
+          icon = icon("broom"),
+          status = "danger",
+          width = "200px"
+        )
+      )
     )
   )
 }

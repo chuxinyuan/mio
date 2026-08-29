@@ -136,6 +136,12 @@ get_symbols = \(con, valid_only = TRUE) {
   as.data.table(dbGetQuery(con, q))
 }
 
+# 单标的名称查询（找不到返回空串）
+symbol_name = \(con, code) {
+  d = dbGetQuery(con, "SELECT name FROM symbol WHERE code = :code", list(code = code))
+  if (nrow(d) == 0) "" else d$name[1]
+}
+
 # ---- daily_bar ----
 # 增量 upsert：日期已存在则更新
 upsert_bars = \(con, dt) {

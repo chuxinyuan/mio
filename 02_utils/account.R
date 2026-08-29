@@ -87,12 +87,14 @@ place_order = \(
   }
 
   id = save_order(con, ts, symbol, side, qty, price)
+  side_cn = ifelse(side == "buy", "买入", "卖出")
+  nm = symbol_name(con, symbol)
   write_log(
     con,
     sprintf(
-      "下单 %s %s %d 股 @ %s",
-      side, symbol, qty,
-      ifelse(is.na(price), "市价", as.character(price))
+      "下单 %s %s %s %d 股%s",
+      side_cn, symbol, nm, qty,
+      ifelse(is.na(price), "，市价", sprintf("，价格 %.2f", price))
     ),
     "info",
     "account",
@@ -103,7 +105,7 @@ place_order = \(
 
 cancel_order = \(con, id) {
   set_order_status(con, id, "cancelled")
-  write_log(con, sprintf("撤单 #%d", id), "info", "account")
+  write_log(con, sprintf("撤单 订单 %d", id), "info", "account")
   invisible(TRUE)
 }
 
@@ -116,6 +118,9 @@ match_orders = \(
   settings = load_settings(con)
   orders = get_orders(con, status = "open")
   if (nrow(orders) == 0) return(invisible(NULL))
+
+  syms = get_symbols(con)
+  sym_names = setNames(syms$name, syms$code)
 
   cash = get_cash(con)
   for (i in seq_len(nrow(orders))) {
@@ -163,9 +168,12 @@ match_orders = \(
 
     save_fill(con, o$id, ts, px, o$qty)
     set_order_status(con, o$id, "filled")
+    side_cn = ifelse(o$side == "buy", "买入", "卖出")
+    nm = sym_names[o$symbol]
+    if (is.na(nm)) nm = ""
     write_log(
       con,
-      sprintf("成交 %s %s %d 股 @ %.2f", o$side, o$symbol, o$qty, px),
+      sprintf("成交 %s %s %s %d 股，价格 %.2f", side_cn, o$symbol, nm, o$qty, px),
       "info",
       "account",
       ts

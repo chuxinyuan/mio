@@ -352,3 +352,24 @@ table.dataTable.hover tbody tr:hover { background: rgba(0,240,255,0.08) !importa
 .cyber-btns .btn:active {
   transform: translateY(1px);
 }
+
+/* 清空日志按钮：红色霓虹（危险操作，区别于通用青色按钮） */
+.log-clear-wrap .btn {
+  background: linear-gradient(135deg, rgba(255,59,48,0.16), rgba(180,77,255,0.10)) !important;
+  border: 1px solid rgba(255,59,48,0.55) !important;
+  color: #ff6a61 !important;
+  text-shadow: 0 0 8px rgba(255,59,48,0.6);
+  box-shadow: 0 0 12px rgba(255,59,48,0.20), inset 0 0 12px rgba(255,59,48,0.05);
+  font-weight: 600;
+  letter-spacing: 2px;
+  border-radius: 3px;
+  transition: box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.log-clear-wrap .btn:hover {
+  background: rgba(255,59,48,0.22) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 22px rgba(255,59,48,0.5), inset 0 0 16px rgba(255,59,48,0.10);
+}
+.log-clear-wrap .btn:active {
+  transform: translateY(1px);
+}
