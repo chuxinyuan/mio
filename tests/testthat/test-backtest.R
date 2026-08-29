@@ -86,3 +86,36 @@ test_that("evaluate 返回标量（transform=FALSE）", {
   )
   expect_true(is.numeric(out) && length(out) == 1)
 })
+
+test_that("prepare_data 停牌缺口 locf 填充、未上市保留", {
+  b = synthetic_bars(c("A", "B"), n_days = 40)
+  dates = unique(b$date)
+  gap = dates[15:20]
+  pre = dates[1:5]
+  b = b[!(symbol == "B" & date %in% c(gap, pre))]   # B 前 5 日未上市、中间停牌 6 日
+  d = prepare_data(b)
+  close = d$close[, "B"]
+  idx = index(close)
+  gap_idx = which(idx %in% gap)
+  pre_idx = which(idx %in% pre)
+  expect_true(all(is.na(close[pre_idx])), info = "未上市期应保持 NA")
+  expect_true(all(!is.na(close[gap_idx])), info = "停牌缺口应被填充")
+  expect_equal(as.numeric(close[gap_idx[1]]), as.numeric(close[gap_idx[1] - 1]), info = "填前值")
+})
+
+test_that("evaluate 含停牌 NA 的年份不报错且日期对齐", {
+  b = synthetic_bars(c("A", "B", "C"), n_days = 80, start = "2022-01-01")
+  gap = unique(b$date)[20:30]
+  b = b[!(symbol == "A" & date %in% gap)]            # A 停牌一段
+  d = prepare_data(b)
+  d$return = make_return(d$close)
+  res = evaluate(
+    d,
+    c(n1 = 5, n_fact = 1.6, n_sharpe = 6, sh_thresh = 0.5),
+    year = 2022,
+    transform = FALSE,
+    return_data = TRUE
+  )
+  expect_equal(length(res$equity), length(res$dates), info = "equity 与日期等长")
+  expect_false(all(is.na(res$equity)), info = "不应整体为 NA")
+})

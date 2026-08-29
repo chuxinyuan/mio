@@ -51,7 +51,7 @@ em_get = \(path, query = list(), n = 3L, timeout_s = 20) {
   stop(conditionMessage(last))
 }
 
-# 上证50成分
+# 上证 50 成分
 fetch_sse50 = \() {
   parsed = em_get(
     "/api/qt/clist/get",

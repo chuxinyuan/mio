@@ -60,39 +60,87 @@ kline_chart = \(d) {
     e_theme("dark")
 }
 
+# 净值曲线（策略回测 + 账户权益共用）：渐变面积 + 起始基准线 + 最大回撤区间 + 缩放
 equity_chart = \(d) {
-  d |>
+  eq = as.numeric(d$equity)
+  ts = as.character(d$ts)
+  keep = !is.na(eq)
+  eq = eq[keep]
+  ts = ts[keep]
+
+  baseline = if (length(eq)) eq[1] else 100000
+  grad = htmlwidgets::JS(
+    "new echarts.graphic.LinearGradient(0, 0, 0, 1, ",
+    "[{offset:0,color:'rgba(0,240,255,0.35)'},{offset:1,color:'rgba(0,240,255,0.02)'}])"
+  )
+
+  dd = eq / cummax(eq) - 1
+  trough = which.min(dd)
+  peak = which.max(eq[seq_len(trough)])
+  show_dd = length(eq) >= 2 && dd[trough] < 0
+
+  fmt_js = "function(v){ if(v>=1e8) return (v/1e8).toFixed(2)+'亿'; return (v/1e4).toFixed(1)+'万'; }"
+
+  e = d[keep, .(ts, equity)] |>
     e_charts(ts) |>
     e_line(
       equity,
       name = "权益",
+      symbol = "none",
       lineStyle = list(
         width = 2,
         color = CYAN,
         shadowColor = "rgba(0,240,255,0.6)",
         shadowBlur = 10
+      ),
+      itemStyle = list(color = CYAN),
+      areaStyle = list(color = grad)
+    ) |>
+    e_mark_line(
+      data = list(yAxis = baseline),
+      silent = TRUE,
+      itemStyle = list(color = TEXT_DIM, type = "dashed", lineStyle = list(type = "dashed")),
+      label = list(
+        formatter = "起始",
+        color = TEXT_DIM,
+        position = "insideEndTop"
       )
-    ) |>
-    e_area(
-      equity,
-      name = "权益",
-      lineStyle = list(width = 2, color = CYAN),
-      itemStyle = list(color = "rgba(0,240,255,0.20)")
-    ) |>
+    )
+
+  if (show_dd) {
+    e = e |>
+      e_mark_area(
+        data = list(
+          list(xAxis = ts[peak], itemStyle = list(color = "rgba(255,59,48,0.10)")),
+          list(xAxis = ts[trough], itemStyle = list(color = "rgba(255,59,48,0.10)"))
+        ),
+        silent = TRUE
+      )
+  }
+
+  e |>
+    e_datazoom(type = "slider", height = 16, toolbox = FALSE) |>
+    e_grid(left = 8, right = 8, top = 40, bottom = 52, containLabel = TRUE) |>
     e_x_axis(
       axisLabel = list(color = AXIS_TEXT),
       axisLine = list(lineStyle = list(color = "rgba(0,240,255,0.3)"))
     ) |>
     e_y_axis(
       scale = TRUE,
-      axisLabel = list(color = AXIS_TEXT),
+      axisLabel = list(color = AXIS_TEXT, formatter = htmlwidgets::JS(fmt_js)),
       splitLine = list(lineStyle = list(color = "rgba(0,240,255,0.08)"))
     ) |>
     e_tooltip(
       trigger = "axis",
+      axisPointer = list(type = "cross"),
       backgroundColor = "rgba(9,13,22,0.95)",
       borderColor = "rgba(0,240,255,0.5)",
-      textStyle = list(color = TEXT_MAIN)
+      textStyle = list(color = TEXT_MAIN),
+      formatter = htmlwidgets::JS(
+        "function(params){ var p=params[0]; if(!p) return ''; ",
+        "var x=p.data[1]; var s = x>=1e8 ? (x/1e8).toFixed(2)+'亿' : (x/1e4).toFixed(2)+'万'; ",
+        "return p.axisValue + '<br/>权益: ' + s; }"
+      )
     ) |>
     e_legend(textStyle = list(color = TEXT_CYAN)) |>
     e_theme("dark")

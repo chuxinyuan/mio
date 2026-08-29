@@ -56,7 +56,8 @@ market_server = \(id, con, rv) {
     output$rt_table = renderDT({
       d = rt()
       if (nrow(d) == 0) return(datatable(data.table()))
-      d[, amount := round2(amount / 1e8, 2)]   # 成交额 → 亿元
+      d[, volume := round2(volume / 1e4, 2)]    # 成交量 → 万手（两位小数）
+      d[, amount := round2(amount / 1e8, 2)]    # 成交额 → 亿元
       d[, change := round2(change, 2)]          # 涨跌额 → 两位小数
       d[, pct    := round2(pct, 2)]             # 涨跌幅 → 两位小数
       datatable(
@@ -64,13 +65,13 @@ market_server = \(id, con, rv) {
         rownames = FALSE,
         colnames = c(
           "代码", "名称", "现价", "今开",
-          "最高", "最低", "成交量（手）", "成交额（亿）",
+          "最高", "最低", "成交量（万手）", "成交额（亿）",
           "涨跌额", "涨跌幅（%）"
         ),
         options = list(dom = "t", pageLength = 50)
       ) |>
         formatRound(
-          columns = c("price", "open", "high", "low", "amount", "change", "pct"),
+          columns = c("price", "open", "high", "low", "volume", "amount", "change", "pct"),
           digits = 2
         ) |>
         formatStyle("pct", color = styleInterval(0, c(GREEN_DOWN, RED_UP))) |>

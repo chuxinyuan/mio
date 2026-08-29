@@ -247,3 +247,92 @@ table.dataTable.hover tbody tr:hover { background: rgba(0,240,255,0.08) !importa
 
 .btn { letter-spacing: 1px; }
 .echarts4r { width: 100%; }
+
+/* 个股K线：股票下拉框与日期选择框高度、字号保持一致 */
+#shiny-tab-market .selectize-input {
+  font-size: 14px;
+  line-height: 21px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  min-height: 31px;
+}
+#shiny-tab-market .selectize-dropdown .option {
+  font-size: 14px;
+}
+
+/* 统一所有卡片右上角折叠按钮（➕/➖）的霓虹样式，不随 box status 变色 */
+.card-tools .btn-tool {
+  background: rgba(0, 240, 255, 0.10) !important;
+  border: 1px solid rgba(0, 240, 255, 0.40) !important;
+  color: var(--cyan) !important;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.6);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.15);
+}
+.card-tools .btn-tool:hover {
+  background: rgba(0, 240, 255, 0.20) !important;
+  color: #ffffff !important;
+}
+
+/* 策略页：去掉 column() 内层 box() 的双重 padding，使今日信号与上方卡片左右对齐 */
+#shiny-tab-strategy .col-sm-4 > .col-sm-12,
+.strat-right > .col-sm-12 {
+  padding-left: 0;
+  padding-right: 0;
+}
+/* 今日信号与上方区块之间留出间距 */
+#shiny-tab-strategy > .row + .row {
+  margin-top: 20px;
+}
+
+/* 策略页：右栏（净值曲线 + 回测结果）纵向铺满，底部与左栏策略参数对齐 */
+.strat-right {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+/* 抵消 box() 内层 col-sm-12 的 flex:0 0 100%，改为按内容高度纵向堆叠 */
+.strat-right > .col-sm-12 {
+  flex: 0 1 auto !important;
+  max-width: 100% !important;
+}
+/* 结果框占满剩余高度，卡片随之填充 */
+.strat-right > .col-sm-12:last-child {
+  flex: 1 1 auto !important;
+  display: flex;
+  flex-direction: column;
+}
+.strat-right > .col-sm-12:last-child > .card {
+  flex: 1 1 auto;
+  margin-bottom: 0;
+}
+/* 左栏参数卡占满列高，保证两栏底部对齐 */
+#shiny-tab-strategy .col-sm-4 > .col-sm-12,
+#shiny-tab-strategy .col-sm-4 .card {
+  height: 100%;
+}
+
+/* 策略页按钮：统一霓虹风（青→紫渐变、描边发光） */
+.strat-btns .btn {
+  width: 100% !important;
+  margin-top: 10px;
+  background: linear-gradient(135deg, rgba(0,240,255,0.14), rgba(180,77,255,0.10)) !important;
+  border: 1px solid rgba(0,240,255,0.55) !important;
+  color: var(--cyan) !important;
+  text-shadow: 0 0 8px rgba(0,240,255,0.7);
+  box-shadow: 0 0 12px rgba(0,240,255,0.18), inset 0 0 12px rgba(0,240,255,0.05);
+  font-weight: 600;
+  letter-spacing: 2px;
+  border-radius: 3px;
+  transition: box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.strat-btns .btn:first-child {
+  margin-top: 0;
+}
+.strat-btns .btn:hover {
+  background: rgba(0,240,255,0.20) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 22px rgba(0,240,255,0.5), inset 0 0 16px rgba(0,240,255,0.10);
+}
+.strat-btns .btn:active {
+  transform: translateY(1px);
+}

@@ -11,11 +11,17 @@ library(data.table)
 
 # bars: data.table(symbol, date, open, high, low, close, volume)
 # 返回宽 zoo 矩阵列表（行=日期，列=标的）
+# 停牌缺口（内部 NA）用 locf 前值填充，避免模拟遇 NA 价格崩坏；未上市（前置 NA）保留
 prepare_data = \(bars) {
   bars = bars[order(date)]
   w = \(col) {
     d = dcast(bars, date ~ symbol, value.var = col)
     m = as.matrix(d[, -1, drop = FALSE])
+    if (col == "volume") {
+      m[is.na(m)] = 0
+    } else {
+      m = apply(m, 2, \(x) as.numeric(na.locf(x, na.rm = FALSE)))
+    }
     zoo(m, order.by = as.Date(d$date))
   }
   list(
@@ -349,6 +355,7 @@ evaluate = \(
       return(0)
     }
   } else {
+    results$dates = index(data$close)[period]
     results
   }
 }
@@ -362,7 +369,7 @@ run_backtest = \(bars, param, year, settings = NULL) {
   data$return = make_return(data$close)
   results = evaluate(data, param, year = year, settings = settings, return_data = TRUE)
   equity = results[["equity"]]
-  dates = index(data$close)
+  dates = results[["dates"]]
   list(equity = equity, dates = dates, results = results)
 }
 

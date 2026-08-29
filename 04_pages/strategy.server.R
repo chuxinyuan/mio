@@ -30,7 +30,7 @@ strategy_server = \(id, con, rv) {
       )
       list(
         equity = res$equity,
-        dates = index(rv$data$close),
+        dates = res$dates,
         param = p$param
       )
     })
@@ -42,15 +42,19 @@ strategy_server = \(id, con, rv) {
       equity_chart(d)
     })
 
-    output$metrics = renderPrint({
+    output$metrics = renderUI({
       req(bt())
       m = calc_metrics(bt()$equity)
-      cat("训练年份:", params()$year, "\n")
-      cat("总收益:", round(m$total_return * 100, 2), "%\n")
-      cat("年化收益:", round(m$annualized * 100, 2), "%\n")
-      cat("夏普比率:", round(m$sharpe, 2), "\n")
-      cat("最大回撤:", round(m$max_drawdown * 100, 2), "%\n")
-      cat("回测天数:", m$n_days, "\n")
+      if (is.null(m)) return(fluidRow(column(12, p("回测数据不足", style = "color:var(--mio-dim);"))))
+      pct_col = \(x) ifelse(x >= 0, RED_UP, GREEN_DOWN)
+      fluidRow(
+        column(2, value_box(as.character(params()$year), "训练年份", PURPLE)),
+        column(2, value_box(paste0(round2(m$total_return * 100, 2), "%"), "总收益", pct_col(m$total_return))),
+        column(2, value_box(paste0(round2(m$annualized * 100, 2), "%"), "年化收益", pct_col(m$annualized))),
+        column(2, value_box(round2(m$sharpe, 2), "夏普比率", CYAN)),
+        column(2, value_box(paste0(round2(m$max_drawdown * 100, 2), "%"), "最大回撤", GREEN_DOWN)),
+        column(2, value_box(m$n_days, "回测天数", TEXT_CYAN))
+      )
     })
 
     observeEvent(input$optimize, {
@@ -154,7 +158,7 @@ strategy_server = \(id, con, rv) {
       )
       symbols_map = rv$symbols[, .(symbol = code, name)]
       sig = merge(sig, symbols_map, by = "symbol", all.x = TRUE)
-      top = sig[entry == 1, .(symbol, name, favor = round(favor, 3))][1:min(rv$settings$max_assets, .N)]
+      top = sig[entry == 1, .(symbol, name, favor = round2(favor, 2))][1:min(rv$settings$max_assets, .N)]
       datatable(
         top,
         rownames = FALSE,
