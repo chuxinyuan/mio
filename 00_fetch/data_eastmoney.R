@@ -77,7 +77,12 @@ fetch_daily = function(code, to = Sys.Date()) {
 }
 
 # 实时行情（最新价/今开/最高/最低/成交量/成交额/涨跌/涨跌幅）
+# 优先批量 clist/get（一次取全池，fltt=2 下价格/涨跌额已为元、涨跌幅已为 %），失败回退逐只
 fetch_realtime = function(codes) {
+  dt = tryCatch(fetch_realtime_batch(codes), error = function(e) data.table())
+  if (nrow(dt) > 0) return(dt)
+
+  # 回退：逐只 stock/get（字段为分，需 /100）
   res = lapply(codes, function(code) {
     parsed = get_json("http://push2.eastmoney.com/api/qt/stock/get",
                       query = list(secid = secid(code),
@@ -94,11 +99,43 @@ fetch_realtime = function(codes) {
       low     = (d$f45 %||% NA_real_) / 100,
       volume  = d$f47 %||% NA_real_,          # 单位：手
       amount  = d$f48 %||% NA_real_,          # 单位：元
-      change  = (d$f169 %||% NA_real_) / 100,  # 涨跌额（元）
-      pct     = (d$f170 %||% NA_real_) / 100,  # 涨跌幅（%）
+      change  = (d$f169 %||% NA_real_) / 100, # 涨跌额（元）
+      pct     = (d$f170 %||% NA_real_) / 100  # 涨跌幅（%）
     )
   })
   rbindlist(res, fill = TRUE)
+}
+
+# 批量实时行情（单次 clist/get 取全池；codes 非空时过滤）
+fetch_realtime_batch = function(codes = NULL, pool_fs = "b:BK0611") {
+  parsed = get_json("http://push2.eastmoney.com/api/qt/clist/get",
+                    query = list(pn = 1, pz = 100, po = 1, np = 1,
+                                 fltt = 2, invt = 2, fid = "f3",
+                                 fs = pool_fs,
+                                 fields = "f12,f14,f2,f3,f4,f5,f6,f15,f16,f17,f18"),
+                    timeout_s = 15)
+  dt = parse_realtime_batch(parsed$data$diff)
+  if (!is.null(codes) && length(codes) && nrow(dt) > 0)
+    dt = dt[code %in% codes]
+  dt
+}
+
+# 纯解析：clist/get 的 diff → 统一 data.table（可离线测试）
+parse_realtime_batch = function(diff) {
+  if (is.null(diff)) return(data.table())
+  d = as.data.table(diff)
+  if (nrow(d) == 0) return(data.table())
+  d = d[, .(code = as.character(f12),
+            name = f14,
+            price = as.numeric(f2),
+            open = as.numeric(f17),
+            high = as.numeric(f15),
+            low = as.numeric(f16),
+            volume = as.numeric(f5),
+            amount = as.numeric(f6),
+            change = as.numeric(f4),
+            pct = as.numeric(f3))]
+  d
 }
 
 `%||%` = function(a, b) if (is.null(a)) b else a

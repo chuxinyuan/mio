@@ -56,8 +56,9 @@ simulate = function(open_mat, close_mat, entry, exit, favor,
       is.null(names(close_mat)) | is.null(names(open_mat)))
     stop("Mismatching or missing column names in entry, exit, favor, close_mat, or open_mat.")
 
-  favor = zoo(t(apply(favor, 1, function(v) ifelse(is.nan(v) | is.na(v), 0, v))),
+  favor = zoo(replace(as.matrix(favor), is.na(as.matrix(favor)), 0),
               order.by = index(close_mat))
+  names(favor) = names(close_mat)
 
   n_pos = 0
   cash_vec = rep(starting_cash, times = nrow(close_mat))

@@ -36,12 +36,16 @@ make_signals = function(close_mat, return_mat, n1, n2, n_sharpe, sh_thresh) {
   entry = rollapply(cbind(indic, favor),
                     FUN = function(v) entry_func(v, sh_thresh),
                     width = 2, fill = NA, align = "right", by.column = FALSE)
-  names(entry) = names(close_mat)
-
   exit = rollapply(cbind(indic, favor),
                    FUN = function(v) exit_func(v),
                    width = 2, fill = NA, align = "right", by.column = FALSE)
-  names(exit) = names(close_mat)
+
+  # 统一为与 close_mat 同型的矩阵并设置列名（单标的时 rollapply 会退化为向量）
+  entry = zoo(matrix(as.numeric(entry), ncol = ncol(close_mat)),
+              order.by = index(close_mat))
+  exit = zoo(matrix(as.numeric(exit), ncol = ncol(close_mat)),
+             order.by = index(close_mat))
+  names(entry) = names(exit) = names(close_mat)
 
   list(entry = entry, exit = exit, favor = favor)
 }

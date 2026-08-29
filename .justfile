@@ -7,3 +7,7 @@ shiny:
 # 首次/更新行情数据
 refresh:
     Rscript 00_fetch/refresh.R
+
+# 运行单元测试（tests/testthat/，全部离线）
+test:
+    Rscript -e 'testthat::test_dir("tests/testthat")'
