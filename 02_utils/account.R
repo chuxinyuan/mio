@@ -25,6 +25,17 @@ init_account = \(con) {
   invisible(get_cash(con))
 }
 
+# 重置账户：清空订单/成交/持仓/快照与每日结算标记，恢复初始资金
+reset_account = \(con) {
+  dbExecute(con, "DELETE FROM order_ticket")
+  dbExecute(con, "DELETE FROM fill")
+  dbExecute(con, "DELETE FROM position")
+  dbExecute(con, "DELETE FROM account_snapshot")
+  dbExecute(con, "DELETE FROM meta WHERE key IN ('rollover_date', 'auto_cancel_date')")
+  init_account(con)
+  invisible(TRUE)
+}
+
 get_cash = \(con) {
   s = get_snapshots(con)
   if (nrow(s) == 0) return(load_settings(con)$starting_cash)

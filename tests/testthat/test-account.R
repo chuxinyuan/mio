@@ -99,3 +99,28 @@ test_that("rollover_positions 解锁 T+1", {
   expect_equal(get_positions(con)[symbol == "600000"]$avail_qty, 100)
   dbDisconnect(con)
 })
+
+test_that("reset_account 清空订单/成交/持仓/快照并恢复初始资金", {
+  con = new_test_con()
+  b = synthetic_bars("600000", 5)
+  replace_bars(con, "600000", b)
+  px = last_close(con, "600000")
+  id = save_order(con, "2023-01-01 09:00:00", "600000", "buy", 100, px)
+  match_orders(con, setNames(c(px), "600000"), ts = "2023-01-02 09:00:00")
+  set_meta(con, "rollover_date", "2023-01-02")
+  set_meta(con, "auto_cancel_date", "2023-01-02")
+
+  expect_equal(nrow(get_orders(con)), 1)
+  expect_equal(nrow(get_fills(con)), 1)
+  expect_equal(nrow(get_positions(con)), 1)
+
+  reset_account(con)
+  expect_equal(nrow(get_orders(con)), 0)
+  expect_equal(nrow(get_fills(con)), 0)
+  expect_equal(nrow(get_positions(con)), 0)
+  expect_equal(nrow(get_snapshots(con)), 1)
+  expect_equal(get_cash(con), load_settings(con)$starting_cash)
+  expect_equal(get_meta(con, "rollover_date", default = ""), "")
+  expect_equal(get_meta(con, "auto_cancel_date", default = ""), "")
+  dbDisconnect(con)
+})
