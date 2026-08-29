@@ -72,6 +72,47 @@ body, body.dark-mode {
   background: rgba(6,9,16,0.92) !important;
   border-bottom: 1px solid rgba(0,240,255,0.3);
 }
+/* 压缩导航栏高度（仅显示上证指数，无需占满 3.5rem） */
+.main-header.navbar {
+  height: 48px;
+  min-height: 48px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.main-header.navbar .navbar-nav .nav-link {
+  line-height: 48px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+/* 侧边栏品牌条与压缩后的导航栏等高（48px + 1px 边框） */
+.brand-link {
+  height: 49px !important;
+  display: flex;
+  align-items: center;
+}
+/* 品牌条与 dashboardHeader 对齐：抵消 nav.mt-2 的 8px 上边距 */
+.main-sidebar nav.mt-2 {
+  margin-top: 0 !important;
+}
+/* 折叠时（sidebar-mini + sidebar-collapse）：隐藏文字移出布局，logo 水平居中 */
+body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover) .brand-link {
+  justify-content: center;
+}
+body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover) .brand-link .brand-text {
+  display: none !important;
+}
+body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover) .brand-link img,
+body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover) .brand-link .brand-image {
+  margin: 0;
+  float: none;
+}
+/* 悬停临时展开：恢复文字与靠左 */
+body.sidebar-mini.sidebar-collapse .main-sidebar:hover .brand-link {
+  justify-content: flex-start;
+}
+body.sidebar-mini.sidebar-collapse .main-sidebar:hover .brand-link .brand-text {
+  display: inline-block;
+}
 .navbar .custom-switch { display: none !important; }
 .navbar-brand, .brand-link .brand-text {
   font-family: 'MioMix', 'Courier New', 'SimSun', serif !important;
@@ -132,9 +173,11 @@ body, body.dark-mode {
 .card-header {
   background: rgba(0,240,255,0.06) !important;
   border-bottom: 1px solid rgba(0,240,255,0.25) !important;
+  padding: 0.675rem 1.25rem;   /* 纵向 0.75rem → 90%（0.675rem） */
 }
 .card-title {
   color: var(--cyan) !important;
+  font-size: 0.9rem;           /* 1.1rem → 0.9rem，标题字体缩小 */
   letter-spacing: 2px;
   text-transform: uppercase;
   text-shadow: 0 0 8px rgba(0,240,255,0.7);
@@ -232,8 +275,17 @@ table.dataTable.hover tbody tr:hover { background: rgba(0,240,255,0.08) !importa
   border: none !important;
 }
 
-.btn { letter-spacing: 1px; }
+.btn { letter-spacing: 1px; font-size: 12.8px !important; }
 .echarts4r { width: 100%; }
+
+/* box 内容字号统一缩小到 90%（个股K线框除外，保持和谐） */
+table.dataTable { font-size: 14px; }                     /* DT 表格 16 → 14px */
+.form-control { font-size: 14px !important; }             /* 输入框 16 → 14px */
+.control-label { font-size: 14px; }                       /* 输入标签 16 → 14px */
+.selectize-input, .selectize-dropdown .option { font-size: 14px; }   /* 下拉 16 → 14px */
+.cyber-box-value { font-size: 21px; }                     /* KPI 大数字 24 → 21px */
+.cyber-box-label { font-size: 10px; }                     /* KPI 标签 11 → 10px */
+.cyber-box-change { font-size: 12.6px; }                  /* KPI 变动 14 → 12.6px */
 
 /* 个股K线：股票下拉框与日期选择框高度、字号保持一致 */
 #shiny-tab-market .selectize-input {
@@ -245,6 +297,9 @@ table.dataTable.hover tbody tr:hover { background: rgba(0,240,255,0.08) !importa
 }
 #shiny-tab-market .selectize-dropdown .option {
   font-size: 14px;
+}
+#shiny-tab-market .form-control {
+  font-size: 14px !important;
 }
 
 /* 统一所有卡片右上角折叠按钮（➕/➖）的霓虹样式，不随 box status 变色 */
