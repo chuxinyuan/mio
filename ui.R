@@ -179,6 +179,33 @@ ui = dashboardPage(
       .form-control { background: #0a0f1a !important; color: var(--text-main) !important; border: 1px solid rgba(0,240,255,0.25) !important; }
       .form-control:focus { border-color: var(--cyan) !important; box-shadow: 0 0 8px rgba(0,240,255,0.4) !important; }
 
+      /* selectize 下拉框（与 form-control 同主题） */
+      .selectize-input {
+        background: #0a0f1a !important;
+        color: var(--text-main) !important;
+        border: 1px solid rgba(0,240,255,0.25) !important;
+        box-shadow: none !important;
+      }
+      .selectize-input.focus {
+        border-color: var(--cyan) !important;
+        box-shadow: 0 0 8px rgba(0,240,255,0.4) !important;
+      }
+      .selectize-dropdown {
+        background: #0a0f1a !important;
+        color: var(--text-main) !important;
+        border: 1px solid rgba(0,240,255,0.25) !important;
+      }
+      .selectize-dropdown .option {
+        color: var(--text-main);
+      }
+      .selectize-dropdown .option.active {
+        background: rgba(0,240,255,0.12) !important;
+        color: var(--cyan) !important;
+      }
+      .selectize-dropdown .option:hover {
+        background: rgba(0,240,255,0.10) !important;
+      }
+
       .btn { letter-spacing: 1px; }
       .echarts4r { width: 100%; }
     "

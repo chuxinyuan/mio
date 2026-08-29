@@ -10,7 +10,19 @@ market_ui = \(id) {
         width = 12,
         status = "primary",
         solidHeader = TRUE,
-        selectInput(ns("sym"), label = NULL, choices = NULL, width = "320px"),
+        div(
+          style = "display: flex; gap: 10px; align-items: center; flex-wrap: wrap;",
+          selectInput(ns("sym"), label = NULL, choices = NULL, width = "320px"),
+          dateRangeInput(
+            ns("date_range"),
+            label = NULL,
+            start = NULL,
+            end = NULL,
+            language = "zh-CN",
+            separator = " 至 ",
+            width = "380px"
+          )
+        ),
         echarts4rOutput(ns("kline"), height = "460px")
       )
     ),
