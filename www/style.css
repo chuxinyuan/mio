@@ -322,6 +322,11 @@ table.dataTable.hover tbody tr:hover { background: rgba(0,240,255,0.08) !importa
   margin-top: 20px;
 }
 
+/* 账户页：KPI / 权益曲线 / 当前持仓 各区块之间留出间距 */
+#shiny-tab-account > .row + .row {
+  margin-top: 20px;
+}
+
 /* 霓虹按钮组（策略/下单等页共用）：青→紫渐变、描边发光 */
 .cyber-btns .btn {
   width: 100% !important;

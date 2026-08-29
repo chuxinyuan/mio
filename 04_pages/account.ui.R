@@ -8,14 +8,16 @@ account_ui = \(id) {
     fluidRow(
       box(
         title = "权益曲线",
-        width = 8,
+        width = 12,
         status = "primary",
         solidHeader = TRUE,
-        echarts4rOutput(ns("equity_curve"), height = "340px")
-      ),
+        echarts4rOutput(ns("equity_curve"), height = "400px")
+      )
+    ),
+    fluidRow(
       box(
         title = "当前持仓",
-        width = 4,
+        width = 12,
         status = "success",
         solidHeader = TRUE,
         DTOutput(ns("positions"))

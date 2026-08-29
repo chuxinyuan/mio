@@ -61,16 +61,19 @@ account_server = \(id, con, rv) {
       if (nrow(pos) == 0) return(datatable(data.table()))
       nm = rv$symbols[, .(symbol = code, name)]
       pos = merge(pos, nm, by = "symbol", all.x = TRUE)
-      pos[, pnl := round((price - avg_cost) * qty, 2)]
+      pos[, avg_cost := round2(avg_cost, 2)]
+      pos[, price := round2(price, 2)]
+      pos[, market_value := round2(market_value, 2)]
+      pos[, pnl := round2((price - avg_cost) * qty, 2)]
       datatable(
         pos[, .(
           symbol,
           name,
           qty,
           avail_qty,
-          avg_cost = round(avg_cost, 2),
+          avg_cost,
           price,
-          market_value = round(market_value, 2),
+          market_value,
           pnl
         )],
         colnames = c(
@@ -80,6 +83,7 @@ account_server = \(id, con, rv) {
         rownames = FALSE,
         options = list(dom = "t", pageLength = 10)
       ) |>
+        formatRound(columns = c("avg_cost", "price", "market_value", "pnl"), digits = 2) |>
         formatStyle("pnl", color = styleInterval(0, c(GREEN_DOWN, RED_UP)))
     })
   })
