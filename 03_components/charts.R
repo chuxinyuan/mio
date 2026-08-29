@@ -138,8 +138,12 @@ equity_chart = \(d) {
       textStyle = list(color = TEXT_MAIN),
       formatter = htmlwidgets::JS(
         "function(params){ var p=params[0]; if(!p) return ''; ",
-        "var x=p.data[1]; var s = x>=1e8 ? (x/1e8).toFixed(2)+'亿' : (x/1e4).toFixed(2)+'万'; ",
-        "return p.axisValue + '<br/>权益: ' + s; }"
+        "var label = p.axisValueLabel || p.axisValue; ",
+        "var v = Array.isArray(p.value) ? p.value[1] : p.value; ",
+        "if (v == null || isNaN(v)) return label + '<br/>权益: --'; ",
+        "v = Number(v); ",
+        "var s = v>=1e8 ? (v/1e8).toFixed(2)+'亿' : (v/1e4).toFixed(2)+'万'; ",
+        "return label + '<br/>权益: ' + s; }"
       )
     ) |>
     e_legend(textStyle = list(color = TEXT_CYAN)) |>
