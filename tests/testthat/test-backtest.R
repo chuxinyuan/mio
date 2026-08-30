@@ -33,9 +33,9 @@ test_that("simulate 基本不变量：无负持仓/现金、equity 有限且非�
     max_assets = 2,
     starting_cash = 100000,
     slip_factor = 0,
-    spread_adjust = 0,
     flat_commission = 0,
-    per_share_commission = 0
+    commission_rate = 0,
+    stamp_duty = 0
   )
   qty = as.numeric(res$pos_qty)
   cash = as.numeric(res$cash)
@@ -60,11 +60,36 @@ test_that("simulate 收到信号会产生交易", {
     max_assets = 3,
     starting_cash = 100000,
     slip_factor = 0.001,
-    spread_adjust = 0.01,
     flat_commission = 3.5,
-    per_share_commission = 0
+    commission_rate = 0.0003,
+    stamp_duty = 0.0005
   )
   expect_true(sum(as.numeric(res$pos_qty) > 0) > 0, info = "应发生过建仓")
+})
+
+test_that("simulate 费用确定性手算（固定佣金+万3费率+卖出印花税，预留费率现金非负）", {
+  n = 6
+  dates = as.Date("2023-01-01") + 0:(n - 1)
+  close_mat = zoo(matrix(10, nrow = n, ncol = 1), order.by = dates)
+  colnames(close_mat) = "A"
+  open_mat = close_mat
+  entry = zoo(matrix(c(0, 1, 0, 0, 0, 0), nrow = n, ncol = 1), order.by = dates)
+  exit = zoo(matrix(c(0, 0, 0, 0, 1, 0), nrow = n, ncol = 1), order.by = dates)
+  favor = zoo(matrix(0.5, nrow = n, ncol = 1), order.by = dates)
+  colnames(entry) = colnames(exit) = colnames(favor) = "A"
+  res = simulate(
+    open_mat, close_mat, entry, exit, favor,
+    max_lookback = 2, max_assets = 1, starting_cash = 100000,
+    slip_factor = 0, flat_commission = 3.5, commission_rate = 0.0003, stamp_duty = 0.0005
+  )
+  # 买入（预留费率后）：qty = floor((100000 - 3.5) / (1 * 10 * 1.0003)) = 9996
+  qty = as.numeric(res$pos_qty[3, 1])
+  expect_equal(qty, 9996)
+  expect_true(all(as.numeric(res$cash) >= 0), info = "持仓期现金应非负（预留了费率佣金）")
+  # 期末现金精确手算：买入额 9996*10=99960，佣金 3.5+99960*0.0003，卖出印花税 99960*0.0005
+  amount = 99960
+  expected = 100000 - amount - (3.5 + amount * 0.0003) + amount - (3.5 + amount * 0.0003) - amount * 0.0005
+  expect_equal(as.numeric(tail(res$cash, 1)), expected, tolerance = 1e-6)
 })
 
 test_that("calc_metrics 已知单调上行序列", {

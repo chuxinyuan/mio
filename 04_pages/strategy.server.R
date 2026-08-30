@@ -2,7 +2,6 @@
 
 strategy_server = \(id, con, rv) {
   moduleServer(id, \(input, output, session) {
-    ns = session$ns
     optimizing = reactiveVal(FALSE)
 
     # 非交易时段：自动下单属于交易动作，锁死
@@ -28,7 +27,7 @@ strategy_server = \(id, con, rv) {
     })
 
     bt = eventReactive(input$run_bt, {
-      req(!is.null(rv$data))
+      req_data(rv)
       p = params()
       res = evaluate(
         rv$data,
@@ -158,19 +157,18 @@ strategy_server = \(id, con, rv) {
     })
 
     output$signals = renderDT({
-      req(!is.null(rv$data))
-      sig = latest_signals(
+      req_data(rv)
+      d = signals_view(
         rv$data,
+        sym_map(rv$symbols),
         input$n1,
         input$n2,
         input$n_sharpe,
-        input$sh_thresh
+        input$sh_thresh,
+        rv$settings$max_assets
       )
-      symbols_map = rv$symbols[, .(symbol = code, name)]
-      sig = merge(sig, symbols_map, by = "symbol", all.x = TRUE)
-      top = sig[entry == 1, .(symbol, name, favor = round2(favor, 2))][1:min(rv$settings$max_assets, .N)]
       datatable(
-        top,
+        d,
         rownames = FALSE,
         colnames = c("代码", "名称", "评分"),
         options = list(dom = "t", pageLength = 10)

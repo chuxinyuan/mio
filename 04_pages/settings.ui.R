@@ -36,22 +36,10 @@ settings_ui = \(id) {
         step = 0.0005
       ),
       numericInput(
-        ns("spread_adjust"),
-        "价差",
-        value = NULL,
-        step = 0.001
-      ),
-      numericInput(
         ns("flat_commission"),
         "固定佣金",
         value = NULL,
         step = 0.1
-      ),
-      numericInput(
-        ns("per_share_commission"),
-        "每手佣金",
-        value = NULL,
-        step = 0.001
       ),
       br(),
       div(

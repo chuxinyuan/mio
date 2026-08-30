@@ -2,7 +2,6 @@
 
 account_server = \(id, con, rv) {
   moduleServer(id, \(input, output, session) {
-    ns = session$ns
 
     observe({
       tick(5000, session)
@@ -10,39 +9,29 @@ account_server = \(id, con, rv) {
       rollover_positions(con, max(rv$bars$date))
     })
 
-    acct = reactive({
-      get_account(con, prices = latest_prices(con))
-    })
-
     output$kpis = renderUI({
       tick(5000, session)
-      a = acct()
-      pos = a$positions
-      pos_value = sum(pos$market_value, na.rm = TRUE)
-      pnl = sum((pos$price - pos$avg_cost) * pos$qty, na.rm = TRUE)
-      pnl = ifelse(is.na(pnl), 0, pnl)
-      snaps = get_snapshots(con)$equity
-      equity_change = if (length(snaps) >= 2) snaps[length(snaps)] - snaps[length(snaps) - 1] else 0
+      k = account_kpis_view(con)
       fluidRow(
-        column(3, value_box(fmt_money(a$cash), "可用资金", MAGENTA)),
+        column(3, value_box(fmt_money(k$cash), "可用资金", MAGENTA)),
         column(
           3,
           value_box(
-            fmt_money(a$equity),
+            fmt_money(k$equity),
             "总资产",
             CYAN,
-            change = equity_change,
-            sparkline = tail(snaps, 30)
+            change = k$equity_change,
+            sparkline = k$spark
           )
         ),
-        column(3, value_box(as.character(nrow(pos)), "持仓数", PURPLE)),
+        column(3, value_box(as.character(k$n_pos), "持仓数", PURPLE)),
         column(
           3,
           value_box(
-            fmt_signed(pnl),
+            fmt_signed(k$pnl),
             "浮盈亏",
-            ifelse(pnl >= 0, RED_UP, GREEN_DOWN),
-            change = pnl
+            ifelse(k$pnl >= 0, RED_UP, GREEN_DOWN),
+            change = k$pnl
           )
         )
       )
@@ -50,32 +39,15 @@ account_server = \(id, con, rv) {
 
     output$equity_curve = renderEcharts4r({
       tick(5000, session)
-      s = get_snapshots(con)
-      if (nrow(s) < 2) s = rbind(s, s)
-      equity_chart(s[, .(ts, equity)])
+      equity_chart(equity_view(con))
     })
 
     output$positions = renderDT({
       tick(5000, session)
-      pos = acct()$positions
-      if (nrow(pos) == 0) return(datatable(data.table()))
-      nm = rv$symbols[, .(symbol = code, name)]
-      pos = merge(pos, nm, by = "symbol", all.x = TRUE)
-      pos[, avg_cost := round2(avg_cost, 2)]
-      pos[, price := round2(price, 2)]
-      pos[, market_value := round2(market_value, 2)]
-      pos[, pnl := round2((price - avg_cost) * qty, 2)]
+      d = positions_view(con, sym_map(rv$symbols))
+      if (nrow(d) == 0) return(datatable(data.table()))
       datatable(
-        pos[, .(
-          symbol,
-          name,
-          qty,
-          avail_qty,
-          avg_cost,
-          price,
-          market_value,
-          pnl
-        )],
+        d,
         colnames = c(
           "代码", "名称", "持仓", "可卖",
           "成本", "现价", "市值", "浮盈亏"

@@ -2,7 +2,6 @@
 
 market_server = \(id, con, rv) {
   moduleServer(id, \(input, output, session) {
-    ns = session$ns
 
     observe({
       req(nrow(rv$symbols) > 0)
@@ -22,21 +21,9 @@ market_server = \(id, con, rv) {
 
     kline = reactive({
       req(input$sym)
-      b = load_bars(con, symbols = input$sym)
+      b = kline_view(con, input$sym, input$date_range)
       req(nrow(b) > 0)
-      b = b[order(date)]
-      b[, date := as.Date(date)]
-      b[, `:=`(
-        ma5 = frollmean(close, 5),
-        ma10 = frollmean(close, 10),
-        ma20 = frollmean(close, 20)
-      )]
-      rng = input$date_range
-      if (!is.null(rng) && !is.na(rng[1]) && !is.na(rng[2])) {
-        b = b[date >= rng[1] & date <= rng[2]]
-      }
-      req(nrow(b) > 0)
-      b[, .(date, open, close, low, high, volume, ma5, ma10, ma20)]
+      b
     })
 
     output$kline = renderEcharts4r({
@@ -54,12 +41,8 @@ market_server = \(id, con, rv) {
     })
 
     output$rt_table = renderDT({
-      d = rt()
+      d = realtime_view(rt())
       if (nrow(d) == 0) return(datatable(data.table()))
-      d[, volume := round2(volume / 1e4, 2)]    # 成交量 → 万手（两位小数）
-      d[, amount := round2(amount / 1e8, 2)]    # 成交额 → 亿元
-      d[, change := round2(change, 2)]          # 涨跌额 → 两位小数
-      d[, pct    := round2(pct, 2)]             # 涨跌幅 → 两位小数
       datatable(
         d,
         rownames = FALSE,

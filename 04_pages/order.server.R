@@ -2,7 +2,6 @@
 
 order_server = \(id, con, rv) {
   moduleServer(id, \(input, output, session) {
-    ns = session$ns
 
     observe({
       req(nrow(rv$symbols) > 0)
@@ -81,22 +80,9 @@ order_server = \(id, con, rv) {
 
     output$orders = renderDT({
       tick(5000, session)
-      o = get_orders(con)
-      if (nrow(o) > 0) {
-        nm = rv$symbols[, .(symbol = code, name)]
-        o = merge(o, nm, by = "symbol", all.x = TRUE)
-        o[, side := fifelse(side == "buy", "买入", "卖出")]
-        o[, status := fcase(
-          status == "open", "未成交",
-          status == "filled", "已成交",
-          status == "cancelled", "已撤销",
-          default = status
-        )]
-      } else {
-        o[, name := character()]
-      }
+      d = orders_view(con, sym_map(rv$symbols))
       datatable(
-        o[, .(id, ts, symbol, name, side, qty, price, status)],
+        d,
         rownames = FALSE,
         colnames = c("单号", "时间", "标的", "名称", "方向", "数量", "价格", "状态"),
         options = list(pageLength = 10)
@@ -105,23 +91,10 @@ order_server = \(id, con, rv) {
 
     output$fills = renderDT({
       tick(5000, session)
-      f = get_fills(con)
-      if (nrow(f) == 0) return(datatable(data.table()))
-      nm = rv$symbols[, .(symbol = code, name)]
-      f = merge(f, nm, by = "symbol", all.x = TRUE)
-      px = latest_prices(con)
-      px_map = setNames(px$price, px$symbol)
-      f[, price := round2(price, 2)]
-      f[, cur_price := round2(px_map[symbol], 2)]
-      f[, ret := fifelse(
-        side == "buy",
-        (cur_price - price) * qty,
-        (price - cur_price) * qty
-      )]
-      f[, ret := round2(ret, 2)]
-      f[, side := fifelse(side == "buy", "买入", "卖出")]
+      d = fills_view(con, sym_map(rv$symbols))
+      if (nrow(d) == 0) return(datatable(data.table()))
       datatable(
-        f[, .(id, order_id, ts, symbol, name, side, price, qty, cur_price, ret)],
+        d,
         rownames = FALSE,
         colnames = c(
           "成交号", "订单号", "时间", "代码", "名称",

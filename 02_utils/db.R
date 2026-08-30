@@ -308,9 +308,7 @@ default_settings = \() {
     max_assets = MAX_ASSETS,
     starting_cash = STARTING_CASH,
     slip_factor = SLIP_FACTOR,
-    spread_adjust = SPREAD_ADJUST,
     flat_commission = FLAT_COMMISSION,
-    per_share_commission = PER_SHARE_COMMISSION,
     commission_rate = COMMISSION_RATE,
     stamp_duty = STAMP_DUTY
   )
@@ -329,6 +327,12 @@ set_setting = \(con, key, value) {
 get_setting = \(con, key, default) {
   r = dbGetQuery(con, "SELECT value FROM settings WHERE key = :key", list(key = key))
   if (nrow(r) == 0) default else type.convert(r$value[[1]], as.is = TRUE)
+}
+
+# 清空全部自定义设置（恢复默认值）
+clear_settings = \(con) {
+  dbExecute(con, "DELETE FROM settings")
+  invisible(TRUE)
 }
 
 # 载入全部参数，DB 缺失时回退到默认值
@@ -375,4 +379,10 @@ get_logs = \(con, limit = 500) {
     con,
     paste0("SELECT * FROM sys_log ORDER BY ts DESC LIMIT ", as.integer(limit))
   ))
+}
+
+# 清空系统日志
+clear_logs = \(con) {
+  dbExecute(con, "DELETE FROM sys_log")
+  invisible(TRUE)
 }

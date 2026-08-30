@@ -152,13 +152,3 @@ equity_chart = \(d) {
 
 fmt_money = \(x) paste0("¥", format(round(x, 2), big.mark = ",", scientific = FALSE))
 fmt_signed = \(x) paste0(ifelse(x >= 0, "+", ""), format(round(x, 2), big.mark = ",", scientific = FALSE))
-
-# 四舍五入（远离零，避免 R round() 的银行家舍入）
-round2 = \(x, digits) {
-  posneg = sign(x)
-  z = abs(x) * 10^digits
-  z = z + 0.5 + sqrt(.Machine$double.eps)
-  z = trunc(z)
-  z = z / 10^digits
-  z * posneg
-}

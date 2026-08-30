@@ -4,12 +4,9 @@ linters: linters_with_defaults(
     object_usage_linter = NULL,           # 全局常量在 config.R，单文件分析误报
     object_name_linter = NULL,
     object_length_linter = NULL,
-    function_argument_linter = NULL,
     indentation_linter = NULL,
-    cyclocomp_linter = NULL,
     return_linter = NULL,                 # 显式 return 更清晰
     commented_code_linter = NULL,         # 中文小节注释被误判
-    logic_operator_linter = NULL,         # 书移植代码用单 & / |
     vector_logic_linter = NULL,           # 书移植校验逻辑用单 & / |
     seq_linter = NULL                     # 循环计数 1:n 属书移植风格
   )

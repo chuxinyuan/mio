@@ -15,6 +15,8 @@ mio 是一个基于 R 的量化交易系统，以 bs4Dash（深色赛博朋克�
   - `backtest.R` — 数据准备、组合模拟 `simulate`、评估 `evaluate`、绩效 `calc_metrics`
   - `optimize.R` — 广义模式搜索参数优化 `optimize_params`
   - `account.R` — 模拟账户与订单撮合（paper trading）
+  - `market_time.R` — 交易时段判定与刷新节奏（`in_trading_hours` / `tick`）
+  - `views.R` — **视图层**：页面显示数据组装（纯函数，可单测；页面 server 只做取数→渲染）
 - `03_components/` — 可复用组件（`charts.R` 图表、`value_box.R` KPI 卡）
 - `04_pages/` — 页面模块，`.ui.R` 与 `.server.R` 成对（总览/行情/策略/订单/账户/日志/设置）
 - `50_data/` — 数据目录（`mio.db` SQLite 单文件）
@@ -27,6 +29,21 @@ mio 是一个基于 R 的量化交易系统，以 bs4Dash（深色赛博朋克�
 - 复权：**后复权（hfq）**——长史不会因累计分红取负，回测稳健（前复权 qfq 对高分红股长史会取负，破坏回测）；`replace_bars` 删旧插新保证一致性
 - 数据库 Schema 见 `02_utils/db.R` 的 `init_db()`
 - 标的池动态获取（`fetch_sse50()`，`fs=b:BK0611`），不写死成分
+
+## 共享状态 rv 契约
+
+`global.R` 的 `rv`（reactiveValues）是各页面模块共用的响应式状态，字段契约如下，页面只读、不修改：
+
+| 字段 | 类型 | 说明 | 消费者 |
+|---|---|---|---|
+| `symbols` | data.table(code, name, board, is_valid) | 标的池，`reload()`/刷新后更新 | 各页标的选择/名称映射 |
+| `bars` | data.table(symbol,date,open,high,low,close,volume) | 全量日K原始行情 | 行情/账户/自动下单 |
+| `data` | list(close/open/high/low/volume=zoo, return=zoo) 或 NULL | 回测准备数据，`reload()` 构建 | 策略页（用 `req_data(rv)` 校验） |
+| `settings` | list(max_assets, starting_cash, slip_factor, flat_commission, commission_rate, stamp_duty) | 交易/账户参数，DB 覆盖默认 | 回测/撮合/下单 |
+| `refresh` | integer | 刷新计数器，`reload()` 自增 | 触发相关输出重算 |
+
+- 名称映射统一用 `views.R` 的 `sym_map(rv$symbols)`；回测数据校验用 `req_data(rv)`
+- 新增页面如需新字段：先在 `global.R` 与上表登记契约，再使用
 
 ## 运行约定
 

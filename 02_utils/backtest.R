@@ -63,14 +63,18 @@ simulate = \(
   max_assets,
   starting_cash,
   slip_factor,
-  spread_adjust,
   flat_commission,
-  per_share_commission,
+  commission_rate,
+  stamp_duty,
   verbose = FALSE,
   fail_thresh = 0,
   init_pos = NULL,
   init_price = NULL
 ) {
+
+  # 费用口径与模拟盘一致：固定佣金 + 按金额费率（卖出另计印花税）
+  comm = \(amount) flat_commission + amount * commission_rate
+  stamp = \(amount) amount * stamp_duty
 
   if (
     any(dim(entry) != dim(exit)) |
@@ -219,14 +223,15 @@ simulate = \(
     if (length(exit_trigger) > 0) {
       for (j in 1:length(exit_trigger)) {
         exit_price = as.numeric(open_mat[i + 1, exit_trigger[j]])
-        effective_price = exit_price * (1 - exit_trigger_type[j] * slip_factor) -
-          exit_trigger_type[j] * (per_share_commission + spread_adjust)
+        effective_price = exit_price * (1 - exit_trigger_type[j] * slip_factor)
+        fee = comm(as.numeric(pos_qty[i, exit_trigger[j]]) * effective_price) +
+          stamp(as.numeric(pos_qty[i, exit_trigger[j]]) * effective_price)
 
         if (exit_trigger_type[j] == 1) {
-          cash_vec[i + 1] = cash_vec[i + 1] + (as.numeric(pos_qty[i, exit_trigger[j]]) * effective_price) - flat_commission
+          cash_vec[i + 1] = cash_vec[i + 1] + (as.numeric(pos_qty[i, exit_trigger[j]]) * effective_price) - fee
         } else {
           cash_vec[i + 1] = cash_vec[i + 1] - (as.numeric(pos_qty[i, exit_trigger[j]]) *
-            (2 * as.numeric(entry_price[i, exit_trigger[j]]) - effective_price)) - flat_commission
+            (2 * as.numeric(entry_price[i, exit_trigger[j]]) - effective_price)) - fee
         }
 
         pos_qty[i + 1, exit_trigger[j]] = 0
@@ -238,16 +243,19 @@ simulate = \(
     if (length(trigger) > 0) {
       for (j in 1:length(trigger)) {
         entry_price_cur = as.numeric(open_mat[i + 1, trigger[j]])
-        effective_price = entry_price_cur * (1 + trigger_type[j] * slip_factor) +
-          trigger_type[j] * (per_share_commission + spread_adjust)
+        effective_price = entry_price_cur * (1 + trigger_type[j] * slip_factor)
 
         pos_qty[i + 1, trigger[j]] = trigger_type[j] *
-          floor(((cash_vec[i + 1] - flat_commission) / (max_assets - n_pos)) / effective_price)
+          floor(
+            ((cash_vec[i + 1] - flat_commission) / (max_assets - n_pos)) /
+              (effective_price * (1 + commission_rate))
+          )
 
         entry_price[i + 1, trigger[j]] = effective_price
 
         cash_vec[i + 1] = cash_vec[i + 1] -
-          (trigger_type[j] * as.numeric(pos_qty[i + 1, trigger[j]]) * effective_price) - flat_commission
+          (trigger_type[j] * as.numeric(pos_qty[i + 1, trigger[j]]) * effective_price) -
+          comm(as.numeric(pos_qty[i + 1, trigger[j]]) * effective_price)
 
         n_pos = n_pos + 1
       }
@@ -324,9 +332,9 @@ evaluate = \(
     max_lookback = max_lookback,
     max_assets = max_assets,
     slip_factor = settings$slip_factor,
-    spread_adjust = settings$spread_adjust,
     flat_commission = settings$flat_commission,
-    per_share_commission = settings$per_share_commission,
+    commission_rate = settings$commission_rate,
+    stamp_duty = settings$stamp_duty,
     verbose = FALSE,
     fail_thresh = 0
   )

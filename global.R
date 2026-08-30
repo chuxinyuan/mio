@@ -33,7 +33,7 @@ future::plan(future::multisession, workers = 2)
 
 # 加载项目源码（按依赖顺序，与目录编号一致：配置 → 数据 → 设置 → 工具 → 组件 → 页面）
 source("config.R")                                    # 业务常量（根目录）
-source("00_fetch/market_data.R")                   # 数据获取（腾讯历史 + 东财延时行情）
+source("00_fetch/market_data.R")                      # 数据获取（腾讯历史 + 东财延时行情）
 source("01_settings/path.R")                          # 路径常量
 source("01_settings/color.R")                         # 色板常量
 suppressMessages(source("02_utils/db.R"))             # SQLite 存储封装
@@ -42,6 +42,7 @@ suppressMessages(source("02_utils/backtest.R"))       # 回测引擎（准备/�
 suppressMessages(source("02_utils/optimize.R"))       # 参数优化
 suppressMessages(source("02_utils/account.R"))        # 模拟账户与撮合
 suppressMessages(source("02_utils/market_time.R"))    # 交易时段判定与刷新节奏
+suppressMessages(source("02_utils/views.R"))          # 视图层（页面显示数据组装）
 source("03_components/charts.R")                      # 图表组件
 source("03_components/value_box.R")                   # KPI 卡组件
 
@@ -65,13 +66,20 @@ init_db(con)          # 建表（幂等）
 init_account(con)     # 首次写入初始资金快照
 onStop(\() try(dbDisconnect(con), silent = TRUE))
 
-# 共享响应式状态（各页面模块共用）
+# ---- 共享响应式状态 rv 契约（各页面模块共用，契约见 AGENTS.md「共享状态 rv 契约」）----
+# symbols : data.table(code, name, board, is_valid)  标的池，reload()/refresh 后更新
+# bars    : data.table(symbol, date, open, high, low, close, volume)  全量日K原始行情
+# data    : list(close/open/high/low/volume = zoo 宽矩阵, return = zoo) 或 NULL
+#           回测准备数据，由 reload() 构建（页面用 req_data(rv) 校验后再用）
+# settings: list(max_assets, starting_cash, slip_factor, flat_commission, commission_rate, stamp_duty)
+#           交易/账户参数，DB 覆盖默认值（设置页保存后更新）
+# refresh : integer  数据刷新计数器，reload() 自增（触发相关输出重算）
 rv = reactiveValues(
-  symbols  = get_symbols(con),      # 标的池（代码/名称/板块）
-  bars     = load_bars(con),        # 全量日K原始行情
-  data     = NULL,                  # 回测用准备数据（宽 zoo 矩阵，reload 时构建）
-  settings = load_settings(con),    # 交易/账户参数（DB 覆盖默认值）
-  refresh  = 0                      # 数据刷新计数器（触发相关输出重算）
+  symbols = get_symbols(con),
+  bars = load_bars(con),
+  data = NULL,
+  settings = load_settings(con),
+  refresh = 0
 )
 
 # 重建行情数据：加载 bars → prepare_data 宽矩阵 → 生成收益率矩阵

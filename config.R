@@ -35,10 +35,8 @@ TRADING_END_PM   = "15:00"
 MARKET_WATCH_MS  = 60000    # 收盘后静默探测间隔（毫秒）
 
 # 交易/账户（默认值，可在 App 设置页覆盖并持久化）
-STARTING_CASH        = 100000
-SLIP_FACTOR          = 0.001
-SPREAD_ADJUST        = 0.01
-FLAT_COMMISSION      = 3.5
-PER_SHARE_COMMISSION = 0
-COMMISSION_RATE      = 0.0003    # 佣金 万3
-STAMP_DUTY           = 0.0005    # 印花税 万5（卖出）
+STARTING_CASH   = 100000
+SLIP_FACTOR     = 0.001
+FLAT_COMMISSION = 3.5
+COMMISSION_RATE = 0.0003    # 佣金 万3
+STAMP_DUTY      = 0.0005    # 印花税 万5（卖出）
