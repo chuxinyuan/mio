@@ -1,4 +1,4 @@
-# R/data_eastmoney.R — 行情数据获取（上交所）
+# R/market_data.R — 行情数据获取（上交所）
 # 历史日线：腾讯 fqkline（单一来源）；行情/标的池/指数：东方财富延时接口
 # 依赖：httr + jsonlite + data.table
 

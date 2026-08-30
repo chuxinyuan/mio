@@ -7,7 +7,7 @@ mio 是一个基于 R 的量化交易系统，以 bs4Dash（深色赛博朋克�
 ## 目录结构
 
 - `config.R` — 业务常量（策略/组合/交易参数）
-- `00_fetch/` — 数据获取（`data_eastmoney.R` 取数 + 刷新）
+- `00_fetch/` — 数据获取（`market_data.R` 取数 + 刷新）
 - `01_settings/` — 配置（`color.R` 色板常量、`path.R` 路径常量）
 - `02_utils/` — 引擎函数
   - `db.R` — SQLite 封装（建表、行情/交易/账户/日志/设置读写）

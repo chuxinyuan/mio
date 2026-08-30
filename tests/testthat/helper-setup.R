@@ -18,7 +18,7 @@ suppressMessages({
   source("config.R")
   source("01_settings/path.R")
   source("01_settings/color.R")
-  source("00_fetch/data_eastmoney.R")
+  source("00_fetch/market_data.R")
   source("02_utils/db.R")
   source("02_utils/indicators.R")
   source("02_utils/backtest.R")

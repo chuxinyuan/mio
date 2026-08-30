@@ -56,8 +56,8 @@ settings_ui = \(id) {
       br(),
       div(
         class = "cyber-btns",
-        actionButton(ns("save"), "保存设置", status = "info", width = "100%"),
-        actionButton(ns("reset"), "恢复默认", status = "info", width = "100%")
+        actionButton(ns("save"), "保存设置", icon = icon("save"), status = "info", width = "100%"),
+        actionButton(ns("reset"), "恢复默认", icon = icon("undo"), status = "info", width = "100%")
       )
     )
   )

@@ -29,12 +29,14 @@ order_ui = \(id) {
           actionButton(
             ns("submit"),
             "提交订单",
+            icon = icon("cart-plus"),
             status = "info",
             width = "100%"
           ),
           actionButton(
             ns("match"),
             "撮合订单",
+            icon = icon("handshake"),
             status = "info",
             width = "100%"
           ),
@@ -44,6 +46,7 @@ order_ui = \(id) {
           actionButton(
             ns("cancel"),
             "撤销订单",
+            icon = icon("times-circle"),
             status = "info",
             width = "100%"
           )
