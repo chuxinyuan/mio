@@ -65,9 +65,10 @@ source("04_pages/settings.ui.R")
 source("04_pages/settings.server.R")
 
 # 数据库连接（应用级单例：所有会话共用同一连接；应用退出时关闭）
+xfun::dir_create(dirname(DB_PATH))    # 确保 data/ 存在（clone 后目录不入库）
 con = connect_db()
-init_db(con)          # 建表（幂等）
-init_account(con)     # 首次写入初始资金快照
+init_db(con)                          # 建表（幂等）
+init_account(con)                     # 首次写入初始资金快照
 onStop(\() try(dbDisconnect(con), silent = TRUE))
 
 # ---- 共享响应式状态 rv 契约（各页面模块共用，契约见 AGENTS.md「共享状态 rv 契约」）----
