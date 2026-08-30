@@ -32,7 +32,22 @@ ui = dashboardPage(
   ),
   body = dashboardBody(
     shinyjs::useShinyjs(),
-    tags$head(tags$link(rel = "stylesheet", href = "style.css")),
+    tags$head(
+      tags$script("document.title = '量化交易系统';"),
+      tags$link(rel = "shortcut icon", href = "favicon.ico"),
+      tags$meta(property = "og:title", content = "量化交易系统"),
+      tags$meta(property = "og:description", content = "基于 R 语言的量化交易系统，用于模拟交易和教学演示"),
+      tags$meta(property = "og:image", content = paste0(APP_URL, "logo.png")),
+      tags$meta(property = "og:url", content = APP_URL),
+      tags$meta(property = "og:type", content = "website"),
+      tags$meta(name = "wechat-share-title", content = "量化交易系统"),
+      tags$meta(name = "wechat-share-desc", content = "基于 R 语言的量化交易系统，用于模拟交易和教学演示"),
+      tags$meta(name = "wechat-share-image", content = paste0(APP_URL, "logo.png")),
+      tags$meta(itemprop = "name", content = "量化交易系统"),
+      tags$meta(itemprop = "description", content = "基于 R 语言的量化交易系统，用于模拟交易和教学演示"),
+      tags$meta(itemprop = "image", content = paste0(APP_URL, "logo.png")),
+      tags$link(rel = "stylesheet", href = "style.css")
+    ),
     tags$style(HTML(css_vars)),
     tabItems(
       market_ui("market"),

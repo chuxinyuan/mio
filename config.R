@@ -1,6 +1,9 @@
 # config.R — 全局配置
 # 约定：从项目根目录运行，路径一律用相对路径
 
+# 应用部署基址（OG/微信/SEO 标签的绝对 URL 用；域名或子路径变更时改这里）
+APP_URL = "https://shiny.cxy.cc/mio/"
+
 # 策略/组合
 MAX_ASSETS = 10               # 组合最大持仓数
 MAX_ITER   = 100              # 优化最大迭代次数
