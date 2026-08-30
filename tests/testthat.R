@@ -1,3 +1,5 @@
-# tests/testthat.R — testthat 入口占位（test_dir 直接驱动 tests/testthat/）
+# tests/testthat.R — testthat 入口（test_dir 驱动 tests/testthat/）
+# 同时声明测试/CI 依赖（testthat/lintr）供 renv 锁定；本文件不被 source，仅静态声明
 
-# 本文件内容由 .justfile 的 test 命令配合 testthat::test_dir 使用
+library(testthat)
+library(lintr)
