@@ -1,6 +1,6 @@
 ## 关于 mio 量化交易系统
 
-mio 是一个基于 R 的量化交易系统，以 **bs4Dash（深色赛博朋克主题）+ ECharts** 构建，标的池为 **上证50（上交所）**。策略引擎沿用《Automated Trading with R》的组合模拟（`simulate`）与 MACD+Sharpe 排名逻辑，行情、交易、账户、日志统一存于 **SQLite 单文件**（`50_data/mio.db`）。
+mio 是一个基于 R 的量化交易系统，以 **bs4Dash（深色赛博朋克主题）+ ECharts** 构建，标的池为 **上证50（上交所）**。策略引擎沿用《Automated Trading with R》的组合模拟（`simulate`）与 MACD+Sharpe 排名逻辑，行情、交易、账户、日志统一存于 **SQLite 单文件**（`data/mio.db`）。
 
 ### 运行
 

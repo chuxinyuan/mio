@@ -19,7 +19,7 @@ mio 是一个基于 R 的量化交易系统，以 bs4Dash（深色赛博朋克�
   - `views.R` — **视图层**：页面显示数据组装（纯函数，可单测；页面 server 只做取数→渲染）
 - `03_components/` — 可复用组件（`charts.R` 图表、`value_box.R` KPI 卡）
 - `04_pages/` — 页面模块，`.ui.R` 与 `.server.R` 成对（总览/行情/策略/订单/账户/日志/设置）
-- `50_data/` — 数据目录（`mio.db` SQLite 单文件）
+- `data/` — 数据目录（`mio.db` SQLite 单文件）
 - `www/` — 静态资源（favicon、CSS）
 - `global.R` / `ui.R` / `server.R` — bs4Dash 应用入口（根目录，深色赛博朋克主题）
 

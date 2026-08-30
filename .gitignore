@@ -2,6 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-50_data/mio.db
-50_data/mio.db-wal
-50_data/mio.db-shm
+data/mio.db
+data/mio.db-wal
+data/mio.db-shm
