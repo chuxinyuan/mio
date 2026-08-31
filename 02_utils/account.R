@@ -67,6 +67,7 @@ rollover_positions = \(con, date = Sys.Date()) {
 }
 
 # 下单（校验：100 股整数倍、现金/可卖数量充足、涨跌停价）
+# 市价单（price=NA）解析为最新真实收盘价，供展示/日志，并与限价单同样做现金/涨跌停校验
 place_order = \(
   con,
   symbol,
@@ -81,6 +82,7 @@ place_order = \(
   if (qty %% 100 != 0) return(list(ok = FALSE, msg = "数量需为 100 股整数倍"))
 
   prev = last_close(con, symbol)
+  if (is.na(price)) price = prev        # 市价单：解析为最新真实收盘价
   if (!is.na(price) && !is.na(prev)) {
     lim = price_limits(symbol, prev)
     if (side == "buy"  && price > lim$up)   return(list(ok = FALSE, msg = "限价超过涨停价"))

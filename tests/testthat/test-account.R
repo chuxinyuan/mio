@@ -31,7 +31,7 @@ test_that("place_order 现金不足拒绝", {
 test_that("place_order 涨跌停校验", {
   con = new_test_con()
   b = synthetic_bars("600000", 5)
-  replace_bars(con, "600000", b)
+  replace_bars(con, "600000", b, table = "daily_bar_real")
   prev = last_close(con, "600000")
   up = round(prev * 1.10, 2)
   expect_false(place_order(con, "600000", "buy", 100, up + 0.01)$ok)
@@ -47,7 +47,7 @@ test_that("match_orders 单笔买入手算断言", {
   con = new_test_con()
   settings = load_settings(con)
   b = synthetic_bars("600000", 5)
-  replace_bars(con, "600000", b)
+  replace_bars(con, "600000", b, table = "daily_bar_real")
   px = last_close(con, "600000")
   qty = 100
   id = save_order(con, "2023-01-01 09:00:00", "600000", "buy", qty, px)
@@ -75,7 +75,7 @@ test_that("match_orders 单笔卖出手算断言（含印花税）", {
   con = new_test_con()
   settings = load_settings(con)
   b = synthetic_bars("600000", 5)
-  replace_bars(con, "600000", b)
+  replace_bars(con, "600000", b, table = "daily_bar_real")
   px = last_close(con, "600000")
   upsert_position(con, "600000", 200, 200, px)
   id = save_order(con, "2023-01-01 09:00:00", "600000", "sell", 100, NA_real_)
@@ -103,7 +103,7 @@ test_that("rollover_positions 解锁 T+1", {
 test_that("reset_account 清空订单/成交/持仓/快照并恢复初始资金", {
   con = new_test_con()
   b = synthetic_bars("600000", 5)
-  replace_bars(con, "600000", b)
+  replace_bars(con, "600000", b, table = "daily_bar_real")
   px = last_close(con, "600000")
   id = save_order(con, "2023-01-01 09:00:00", "600000", "buy", 100, px)
   match_orders(con, setNames(c(px), "600000"), ts = "2023-01-02 09:00:00")
@@ -122,5 +122,19 @@ test_that("reset_account 清空订单/成交/持仓/快照并恢复初始资金"
   expect_equal(get_cash(con), load_settings(con)$starting_cash)
   expect_equal(get_meta(con, "rollover_date", default = ""), "")
   expect_equal(get_meta(con, "auto_cancel_date", default = ""), "")
+  dbDisconnect(con)
+})
+
+test_that("place_order 市价单解析真实收盘价入库，日志显示价格", {
+  con = new_test_con()
+  b = synthetic_bars("600000", 5)
+  replace_bars(con, "600000", b, table = "daily_bar_real")
+  px = last_close(con, "600000")
+  oid = place_order(con, "600000", "buy", 100)$id
+  o = get_orders(con)
+  expect_equal(o[o$id == oid]$price, px)
+  msg = get_logs(con)$message[1]
+  expect_match(msg, sprintf("价格 %.2f", px))
+  expect_false(grepl("市价", msg))
   dbDisconnect(con)
 })

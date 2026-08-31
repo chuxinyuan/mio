@@ -126,7 +126,7 @@ equity_chart = \(d) {
       axisLine = list(lineStyle = list(color = "rgba(0,240,255,0.3)"))
     ) |>
     e_y_axis(
-      scale = TRUE,
+      min = 0,   # 纵轴从 0 起，避免净值恒定时轴被缩放成"始终 10 万"
       axisLabel = list(color = AXIS_TEXT, formatter = htmlwidgets::JS(fmt_js)),
       splitLine = list(lineStyle = list(color = "rgba(0,240,255,0.08)"))
     ) |>

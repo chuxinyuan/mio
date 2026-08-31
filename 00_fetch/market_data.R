@@ -86,12 +86,43 @@ is_valid_bars = \(d) {
   !is.null(d) && nrow(d) > 0 && all(d$close > 0, na.rm = TRUE)
 }
 
+# 不复权（真实）日K：交易/账户层用真实市价，同一腾讯接口 adjust 留空
+fetch_daily_real = \(code, to = Sys.Date()) {
+  d = tryCatch(fetch_daily_tencent(code, from = FROM, to = to, adjust = ""), error = \(e) NULL)
+  if (is_valid_bars(d)) return(d)
+  data.table(
+    symbol = code, date = character(), open = numeric(),
+    high = numeric(), low = numeric(), close = numeric(), volume = numeric()
+  )
+}
+
 # 腾讯代码（上证 6 开头 → sh，其余 → sz）
 tencent_symbol = \(code) paste0(ifelse(substr(code, 1, 1) == "6", "sh", "sz"), code)
 
+# 腾讯日K单段请求：依次尝试主域/备选 host（主域可能临时 501）
+fqkline_get = \(symbol, from, end, adjust) {
+  last = NULL
+  for (host in FQKLINE_HOSTS) {
+    parsed = tryCatch(
+      get_json(
+        host,
+        query = list(param = sprintf("%s,day,%s,%s,640,%s", symbol, from, end, adjust)),
+        timeout_s = 20,
+        simplify = FALSE
+      ),
+      error = \(e) {
+        last = e
+        NULL
+      }
+    )
+    if (!is.null(parsed)) return(parsed)
+  }
+  stop(conditionMessage(last))
+}
+
 # 腾讯日K（单一来源，稳定；接口每次最多返回 640 行，故按日期倒序分段回取）
-# 复权按 config.R ADJUST（默认 hfq 后复权，长史不会取负）；行格式：date, open, close, high, low, volume
-fetch_daily_tencent = \(code, from = FROM, to = Sys.Date()) {
+# adjust：hfq 后复权（回测用）/ qfq / "" 不复权（交易用真实价）；行格式：date, open, close, high, low, volume
+fetch_daily_tencent = \(code, from = FROM, to = Sys.Date(), adjust = ADJUST) {
   symbol = tencent_symbol(code)
   empty = data.table(
     symbol = code, date = character(), open = numeric(),
@@ -101,14 +132,7 @@ fetch_daily_tencent = \(code, from = FROM, to = Sys.Date()) {
   end = as.Date(to)
   repeat {
     parsed = tryCatch(
-      get_json(
-        "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
-        query = list(
-          param = sprintf("%s,day,%s,%s,640,%s", symbol, as.character(FROM), as.character(end), ADJUST)
-        ),
-        timeout_s = 20,
-        simplify = FALSE
-      ),
+      fqkline_get(symbol, as.character(FROM), as.character(end), adjust),
       error = \(e) NULL
     )
     rows = if (!is.null(parsed)) {
@@ -261,18 +285,26 @@ refresh_universe = \(
 
   for (i in seq_len(nrow(sse))) {
     code = sse$code[i]
-    d = tryCatch(fetch_daily(code, to = to), error = \(e) NULL)
-    if (is.null(d) || nrow(d) == 0) {
+    # 双拉：hfq（回测用）+ 不复权真实价（交易/账户用）
+    d_hfq = tryCatch(fetch_daily(code, to = to), error = \(e) NULL)
+    d_real = tryCatch(fetch_daily_real(code, to = to), error = \(e) NULL)
+    ok = !is.null(d_hfq) && nrow(d_hfq) > 0 && !is.null(d_real) && nrow(d_real) > 0
+    if (!ok) {
       write_log(con, sprintf("[%02d/%02d] %s 获取失败", i, nrow(sse), code), "warn", "fetch")
       if (verbose) cat(sprintf("[%02d/%02d] %s 失败\n", i, nrow(sse), code))
+      # 部分成功也写入，保证数据尽量完整
+      if (!is.null(d_hfq) && nrow(d_hfq) > 0) replace_bars(con, code, d_hfq)
+      if (!is.null(d_real) && nrow(d_real) > 0) replace_bars(con, code, d_real, table = "daily_bar_real")
+      Sys.sleep(throttle_s)
       next
     }
-    replace_bars(con, code, d)
+    replace_bars(con, code, d_hfq)
+    replace_bars(con, code, d_real, table = "daily_bar_real")
     if (verbose) cat(
       sprintf(
-        "[%02d/%02d] %s %s %d 行\n",
+        "[%02d/%02d] %s %s %d 行（hfq+real）\n",
         i, nrow(sse), code,
-        sse$name[i], nrow(d)
+        sse$name[i], nrow(d_hfq)
       )
     )
     Sys.sleep(throttle_s)

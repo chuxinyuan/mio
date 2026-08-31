@@ -41,6 +41,20 @@ init_db = \(con = NULL) {
 
   dbExecute(
     con,
+    "CREATE TABLE IF NOT EXISTS daily_bar_real (
+      symbol TEXT NOT NULL,
+      date   TEXT NOT NULL,
+      open   REAL,
+      high   REAL,
+      low    REAL,
+      close  REAL,
+      volume REAL,
+      PRIMARY KEY (symbol, date)
+    );"
+  )
+
+  dbExecute(
+    con,
     "CREATE TABLE IF NOT EXISTS order_ticket (
       id     INTEGER PRIMARY KEY AUTOINCREMENT,
       ts     TEXT NOT NULL,
@@ -143,33 +157,37 @@ symbol_name = \(con, code) {
 }
 
 # ---- daily_bar ----
-# 增量 upsert：日期已存在则更新
-upsert_bars = \(con, dt) {
+# 增量 upsert：日期已存在则更新（table: daily_bar hfq 回测 / daily_bar_real 真实价交易）
+upsert_bars = \(con, dt, table = "daily_bar") {
   dbExecute(
     con,
-    "INSERT INTO daily_bar (symbol, date, open, high, low, close, volume)
-     VALUES (:symbol, :date, :open, :high, :low, :close, :volume)
-     ON CONFLICT(symbol, date) DO UPDATE SET
-       open = excluded.open, high = excluded.high, low = excluded.low,
-       close = excluded.close, volume = excluded.volume",
+    sprintf(
+      "INSERT INTO %s (symbol, date, open, high, low, close, volume)
+       VALUES (:symbol, :date, :open, :high, :low, :close, :volume)
+       ON CONFLICT(symbol, date) DO UPDATE SET
+         open = excluded.open, high = excluded.high, low = excluded.low,
+         close = excluded.close, volume = excluded.volume",
+      table
+    ),
     dt[, .(symbol, date, open, high, low, close, volume)]
   )
   invisible(dt)
 }
 
-# 全量替换某只股票（前复权会漂移，更新时删旧插新）
-replace_bars = \(con, symbol, dt) {
+# 全量替换某只股票（复权数据会漂移，更新时删旧插新）
+replace_bars = \(con, symbol, dt, table = "daily_bar") {
   dbExecute(
     con,
-    "DELETE FROM daily_bar WHERE symbol = :symbol",
+    sprintf("DELETE FROM %s WHERE symbol = :symbol", table),
     list(symbol = symbol)
   )
-  if (nrow(dt) > 0) upsert_bars(con, dt[, symbol := symbol])
+  if (nrow(dt) > 0) upsert_bars(con, dt[, symbol := symbol], table = table)
   invisible(dt)
 }
 
-load_bars = \(con, symbols = NULL, from = NULL, to = NULL) {
-  q = "SELECT symbol, date, open, high, low, close, volume FROM daily_bar"
+load_bars = \(con, symbols = NULL, from = NULL, to = NULL, real = FALSE) {
+  tbl = if (real) "daily_bar_real" else "daily_bar"
+  q = sprintf("SELECT symbol, date, open, high, low, close, volume FROM %s", tbl)
   cond = character(0)
   params = list()
   if (!is.null(symbols)) {
@@ -201,20 +219,20 @@ last_date = \(con, symbol) {
 last_close = \(con, symbol) {
   r = dbGetQuery(
     con,
-    "SELECT close FROM daily_bar WHERE symbol = :symbol
+    "SELECT close FROM daily_bar_real WHERE symbol = :symbol
      ORDER BY date DESC LIMIT 1",
     list(symbol = symbol)
   )
   if (nrow(r) == 0) NA_real_ else r$close[[1]]
 }
 
-# 每个标的最新一条收盘价（data.table: symbol, price）
+# 每个标的最新一条真实收盘价（交易/账户层：成交价/持仓现价/估值；data.table: symbol, price）
 latest_prices = \(con) {
   as.data.table(dbGetQuery(
     con,
     "SELECT d.symbol, d.close AS price
-     FROM daily_bar d
-     JOIN (SELECT symbol, MAX(date) AS mdate FROM daily_bar GROUP BY symbol) m
+     FROM daily_bar_real d
+     JOIN (SELECT symbol, MAX(date) AS mdate FROM daily_bar_real GROUP BY symbol) m
        ON d.symbol = m.symbol AND d.date = m.mdate"
   ))
 }

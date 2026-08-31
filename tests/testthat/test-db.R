@@ -84,10 +84,22 @@ test_that("save_order / set_order_status / get_orders", {
 test_that("latest_prices 返回每个标的最新收盘", {
   con = new_test_con()
   b = synthetic_bars(c("600000", "600519"), 20)
-  replace_bars(con, "600000", b[symbol == "600000"])
-  replace_bars(con, "600519", b[symbol == "600519"])
+  replace_bars(con, "600000", b[symbol == "600000"], table = "daily_bar_real")
+  replace_bars(con, "600519", b[symbol == "600519"], table = "daily_bar_real")
   lp = latest_prices(con)
   expect_equal(sort(lp$symbol), c("600000", "600519"))
   expect_equal(lp[symbol == "600000"]$price, max(b[symbol == "600000"]$close))
+  dbDisconnect(con)
+})
+
+test_that("交易层取价读真实价表（daily_bar_real），与 hfq 表独立", {
+  con = new_test_con()
+  b = synthetic_bars("600000", 5)
+  replace_bars(con, "600000", b)          # 只写 hfq 表 → 交易层取不到
+  expect_true(is.na(last_close(con, "600000")))
+  expect_equal(nrow(latest_prices(con)), 0)
+  replace_bars(con, "600000", b, table = "daily_bar_real")
+  expect_false(is.na(last_close(con, "600000")))
+  expect_equal(nrow(latest_prices(con)), 1)
   dbDisconnect(con)
 })

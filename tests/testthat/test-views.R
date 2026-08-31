@@ -29,7 +29,7 @@ test_that("orders_view 合并名称、方向/状态中文化，空表保留列",
 test_that("fills_view 计算现价与回报（先舍入价格）", {
   con = new_test_con()
   b = synthetic_bars("600000", 5)
-  replace_bars(con, "600000", b)
+  replace_bars(con, "600000", b, table = "daily_bar_real")
   px = last_close(con, "600000")
   id = save_order(con, "2023-01-01 09:00:00", "600000", "buy", 100, px)
   save_fill(con, id, "2023-01-02 09:00:00", px, 100)
@@ -46,7 +46,7 @@ test_that("fills_view 计算现价与回报（先舍入价格）", {
 test_that("positions_view 四项两位小数", {
   con = new_test_con()
   b = synthetic_bars("600000", 5)
-  replace_bars(con, "600000", b)
+  replace_bars(con, "600000", b, table = "daily_bar_real")
   px = last_close(con, "600000")
   upsert_position(con, "600000", 100, 0, px)
   d = positions_view(con, sym_map(mk_map()))

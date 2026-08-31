@@ -30,6 +30,13 @@ BOARD    = "SSE"              # 交易所：上交所
 EM_HOST       = "http://push2.eastmoney.com"
 EM_HOST_DELAY = "http://push2delay.eastmoney.com"
 
+# 腾讯历史日K接口（主域可能 501，自动回退备选 host）
+FQKLINE_HOSTS = c(
+  "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
+  "https://ifzq.gtimg.cn/appstock/app/fqkline/get",
+  "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get"
+)
+
 # 交易时段（A股，周一至周五）：收盘后页面刷新降为静默探底，次日开盘自动恢复
 TRADING_START_AM = "09:30"
 TRADING_END_AM   = "11:30"
