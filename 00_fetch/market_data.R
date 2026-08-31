@@ -100,6 +100,7 @@ fetch_daily_real = \(code, to = Sys.Date()) {
 tencent_symbol = \(code) paste0(ifelse(substr(code, 1, 1) == "6", "sh", "sz"), code)
 
 # 腾讯日K单段请求：依次尝试主域/备选 host（主域可能临时 501）
+# 每个 host 单次尝试（n=1），依赖 host 回退而非逐 host 重试，避免死 host 拖慢刷新
 fqkline_get = \(symbol, from, end, adjust) {
   last = NULL
   for (host in FQKLINE_HOSTS) {
@@ -108,6 +109,7 @@ fqkline_get = \(symbol, from, end, adjust) {
         host,
         query = list(param = sprintf("%s,day,%s,%s,640,%s", symbol, from, end, adjust)),
         timeout_s = 20,
+        n = 1,
         simplify = FALSE
       ),
       error = \(e) {
