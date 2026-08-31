@@ -63,7 +63,7 @@ fills_view = \(con, sym_map_dt, price_map = NULL) {
   f[, .(id, order_id, ts, symbol, name, side, price, qty, cur_price, ret)]
 }
 
-# 估值价格：实时价缺失的持仓/成交/未成交订单回退最新日收盘，保证现价/市值/权益不遗漏
+# 估值价格：实时价缺失的持仓/成交/未成交订单回退最新日收盘，仍缺则回退成本价（市值=成本、浮盈记0，保证 equity 不遗漏）
 valuation_prices = \(con, rt_dt) {
   pm = if (nrow(rt_dt) > 0) {
     rt_dt[, .(symbol = code, price)]
@@ -78,7 +78,13 @@ valuation_prices = \(con, rt_dt) {
   missing = setdiff(need, pm$symbol)
   if (length(missing) > 0) {
     lp = latest_prices(con)[symbol %in% missing]
-    pm = rbindlist(list(pm, lp), fill = TRUE)
+    still_missing = setdiff(missing, lp$symbol)
+    if (length(still_missing) > 0) {
+      cost_map = get_positions(con)[symbol %in% still_missing & qty > 0, .(symbol, price = avg_cost)]
+      pm = rbindlist(list(pm, lp, cost_map), fill = TRUE)
+    } else {
+      pm = rbindlist(list(pm, lp), fill = TRUE)
+    }
   }
   pm
 }
@@ -113,7 +119,14 @@ prev_close_map = \(con, symbols) {
 account_kpis_view = \(con, price_map = NULL, prev_close = NULL) {
   a = get_account(con, prices = price_map %||% latest_prices(con))
   pos = a$positions
-  pnl = sum((pos$price - pos$avg_cost) * pos$qty, na.rm = TRUE)
+  # 累计浮盈：与持仓表同一舍入口径（市值 - 数量×成本），保证 KPI = Σ持仓表浮盈
+  pnl = sum(
+    round2(
+      round2(pos$qty * round2(pos$price, 2), 2) - pos$qty * round2(pos$avg_cost, 2),
+      2
+    ),
+    na.rm = TRUE
+  )
   pnl = ifelse(is.na(pnl), 0, pnl)
 
   day_pnl = 0
@@ -167,15 +180,15 @@ account_kpis_view = \(con, price_map = NULL, prev_close = NULL) {
   )
 }
 
-# 当前持仓显示数据（成本/现价/市值/浮盈亏均两位小数）
+# 当前持仓显示数据（成本/现价/市值/浮盈亏：同一舍入口径，市值-数量×成本=浮盈 自洽）
 positions_view = \(con, sym_map_dt, price_map = NULL) {
   pos = get_account(con, prices = price_map %||% latest_prices(con))$positions
   if (nrow(pos) == 0) return(data.table())
   pos = merge(pos, sym_map_dt, by = "symbol", all.x = TRUE)
   pos[, avg_cost := round2(avg_cost, 2)]
   pos[, price := round2(price, 2)]
-  pos[, market_value := round2(market_value, 2)]
-  pos[, pnl := round2((price - avg_cost) * qty, 2)]
+  pos[, market_value := round2(qty * price, 2)]
+  pos[, pnl := round2(market_value - qty * avg_cost, 2)]
   pos[, .(symbol, name, qty, avail_qty, avg_cost, price, market_value, pnl)]
 }
 

@@ -53,7 +53,7 @@ test_that("positions_view 四项两位小数", {
   expect_equal(d$name, "浦发银行")
   expect_equal(d$avg_cost, round2(px, 2))
   expect_equal(d$price, round2(px, 2))
-  expect_equal(d$market_value, round2(100 * px, 2))
+  expect_equal(d$market_value, round2(100 * round2(px, 2), 2))
   expect_equal(d$pnl, 0)
   dbDisconnect(con)
 })
@@ -132,6 +132,27 @@ test_that("valuation_prices 覆盖成交/未成交标的，非持仓成交现价
   expect_true(all(c("600000", "600519") %in% pm$symbol))
   f = fills_view(con, sym_map(get_symbols(con)), price_map = pm)
   expect_false(any(is.na(f$cur_price)), info = "非持仓成交现价不应为 NA")
+  dbDisconnect(con)
+})
+
+test_that("持仓市值/浮盈/成本舍入自洽，KPI 累计浮盈 = Σ持仓表浮盈", {
+  con = new_test_con()
+  upsert_position(con, "600000", 100, 100, 10.005)
+  upsert_position(con, "600519", 200, 200, 20.004)
+  pm = data.table(symbol = c("600000", "600519"), price = c(10.005, 20.006))
+  d = positions_view(con, sym_map(get_symbols(con)), price_map = pm)
+  expect_true(all(d$market_value == round2(d$qty * d$price, 2)), info = "市值 = 数量 × 现价")
+  expect_true(all(d$market_value - d$qty * d$avg_cost == d$pnl), info = "市值 - 数量×成本 = 浮盈")
+  k = account_kpis_view(con, price_map = pm)
+  expect_equal(k$pnl, sum(d$pnl), info = "KPI 累计浮盈 = Σ持仓表浮盈")
+  dbDisconnect(con)
+})
+
+test_that("valuation_prices 无日收盘价持仓回退成本价（不遗漏市值）", {
+  con = new_test_con()
+  upsert_position(con, "600000", 100, 100, 10.5)    # daily 无数据
+  pm = valuation_prices(con, data.table())
+  expect_equal(pm[symbol == "600000"]$price, 10.5)
   dbDisconnect(con)
 })
 
