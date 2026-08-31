@@ -114,7 +114,7 @@ order_server = \(id, con, rv, cur_rt) {
 
     output$fills = renderDT({
       tick(5000, session)
-      d = fills_view(con, sym_map(rv$symbols), price_map = cur_rt()[, .(symbol = code, price)])
+      d = fills_view(con, sym_map(rv$symbols), price_map = valuation_prices(con, valuation_quote(con, cur_rt())))
       if (nrow(d) == 0) return(datatable(data.table()))
       datatable(
         d,

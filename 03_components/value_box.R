@@ -21,7 +21,7 @@ inline_sparkline = \(values, color, width = 90, height = 24) {
 change_arrow = \(x) ifelse(x >= 0, "▲", "▼")
 
 value_box = \(value, label, accent = CYAN, change = NULL, sparkline = NULL) {
-  show_change = !is.null(change) && !is.na(change) && change != 0
+  show_change = !is.null(change) && !is.na(change)   # 传了 change 就显示（0 也显示 0.00）
   tags$div(
     class = "cyber-box",
     style = paste0("--accent:", accent, ";"),
@@ -32,8 +32,12 @@ value_box = \(value, label, accent = CYAN, change = NULL, sparkline = NULL) {
       if (show_change)
         tags$span(
           class = "cyber-box-change",
-          style = paste0("color:", ifelse(change >= 0, RED_UP, GREEN_DOWN), ";"),
-          HTML(paste0(change_arrow(change), " ", fmt_signed(change)))
+          style = paste0(
+            "color:",
+            if (change == 0) TEXT_DIM else ifelse(change >= 0, RED_UP, GREEN_DOWN),
+            ";"
+          ),
+          HTML(if (change == 0) "0.00" else paste0(change_arrow(change), " ", fmt_signed(change)))
         ) else NULL,
       if (!is.null(sparkline))
         tags$span(class = "cyber-box-spark", inline_sparkline(sparkline, accent)) else NULL

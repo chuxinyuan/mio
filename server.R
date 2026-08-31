@@ -18,7 +18,7 @@ server = \(input, output, session) {
         # 参照券商：盘中定期写权益快照（约每 60s），供账户权益曲线实时更新
         now = as.numeric(Sys.time())
         if (in_trading_hours() && now - last_snap() >= 60) {
-          a = get_account(con, prices = px[, .(symbol = code, price)])
+          a = get_account(con, prices = valuation_prices(con, px))
           save_snapshot(con, format(Sys.time(), "%Y-%m-%d %H:%M:%S"), a$cash, a$equity)
           last_snap(now)
         }

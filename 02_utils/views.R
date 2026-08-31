@@ -63,21 +63,77 @@ fills_view = \(con, sym_map_dt, price_map = NULL) {
   f[, .(id, order_id, ts, symbol, name, side, price, qty, cur_price, ret)]
 }
 
-# 账户 KPI（现金/总资产/持仓数/浮盈亏/权益变化/近 30 快照）
-account_kpis_view = \(con, price_map = NULL) {
+# 估值价格：实时价缺失的持仓回退最新日收盘，保证市值/权益不遗漏
+valuation_prices = \(con, rt_dt) {
+  pm = if (nrow(rt_dt) > 0) {
+    rt_dt[, .(symbol = code, price)]
+  } else {
+    data.table(symbol = character(), price = numeric())
+  }
+  held = get_positions(con)[qty > 0]$symbol
+  missing = setdiff(held, pm$symbol)
+  if (length(missing) > 0) {
+    lp = latest_prices(con)[symbol %in% missing]
+    pm = rbindlist(list(pm, lp), fill = TRUE)
+  }
+  pm
+}
+
+# 估值实时行情：交易时段用实时价（盘中刷新），非交易时段置空 → 走 valuation_prices 回退最新日收盘（权威，避免陈旧实时价）
+valuation_quote = \(con, rt_dt) {
+  if (in_trading_hours()) rt_dt else data.table()
+}
+
+# 昨收价（前一个交易日真实收盘）：若最新 bar 是今天则取前一交易日，否则取最新
+prev_close_map = \(con, symbols) {
+  d = load_bars(con, symbols = symbols, real = TRUE)
+  if (nrow(d) == 0) return(data.table(symbol = character(), prev_close = numeric()))
+  d = d[order(symbol, date)]
+  today = format(Sys.Date(), "%Y-%m-%d")
+  out = d[, {
+    n = .N
+    if (date[n] == today) {
+      pc = if (n >= 2) close[n - 1] else NA_real_
+    } else {
+      pc = close[n]
+    }
+    .(prev_close = pc)
+  }, by = symbol]
+  out
+}
+
+# 账户 KPI（现金/总资产/持仓数/累计浮盈/当日盈亏/当天浮盈/近 30 快照）
+# price_map: data.table(symbol, price) 估值价（交易实时/收盘日收盘）
+# prev_close: data.table(symbol, prev_close) 昨收（日数据，计算当天浮盈用）
+account_kpis_view = \(con, price_map = NULL, prev_close = NULL) {
   a = get_account(con, prices = price_map %||% latest_prices(con))
   pos = a$positions
   pnl = sum((pos$price - pos$avg_cost) * pos$qty, na.rm = TRUE)
   pnl = ifelse(is.na(pnl), 0, pnl)
-  snaps = get_snapshots(con)$equity
-  equity_change = if (length(snaps) >= 2) snaps[length(snaps)] - snaps[length(snaps) - 1] else 0
+  # 当天浮盈 = Σ((现价 - 昨收) × 数量)（持仓价格当日变动，不含费用；昨收取日数据更权威）
+  day_pnl = if (!is.null(prev_close) && nrow(prev_close) > 0 && nrow(pos) > 0) {
+    pos2 = merge(pos, prev_close, by = "symbol", all.x = TRUE)
+    sum((pos2$price - pos2$prev_close) * pos2$qty, na.rm = TRUE)
+  } else {
+    0
+  }
+  snaps = get_snapshots(con)   # ts, cash, equity
+  if (nrow(snaps) > 0) {
+    today = format(Sys.Date(), "%Y-%m-%d")
+    prev = snaps[ts < paste0(today, " 00:00:00")]      # 今日之前的快照（昨收/初始）
+    base = if (nrow(prev) > 0) tail(prev, 1)$equity else snaps$equity[1]
+    equity_change = a$equity - base                     # 当日盈亏 = 当前权益 - 昨收/初始（含费用）
+  } else {
+    equity_change = 0
+  }
   list(
     cash = a$cash,
     equity = a$equity,
     n_pos = nrow(pos),
     pnl = pnl,
+    day_pnl = day_pnl,
     equity_change = equity_change,
-    spark = tail(snaps, 30)
+    spark = tail(snaps$equity, 30)
   )
 }
 

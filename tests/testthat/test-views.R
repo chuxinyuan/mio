@@ -87,6 +87,57 @@ test_that("account_kpis_view 返回 KPI 字段", {
   expect_equal(k$equity, k$cash)
   expect_equal(k$n_pos, 0)
   expect_equal(k$pnl, 0)
+  expect_equal(k$equity_change, 0)
+  dbDisconnect(con)
+})
+
+test_that("account_kpis_view 当日盈亏 = 当前权益 - 昨收", {
+  con = new_test_con()
+  y = format(Sys.Date() - 1, "%Y-%m-%d")
+  t = format(Sys.Date(), "%Y-%m-%d")
+  save_snapshot(con, paste0(y, " 15:00:00"), 99960, 99960)     # 昨收
+  save_snapshot(con, paste0(t, " 10:00:00"), 100150, 100150)   # 今日
+  k = account_kpis_view(con)
+  expect_equal(k$equity, 100150)
+  expect_equal(k$equity_change, 190)   # 100150 - 99960
+  dbDisconnect(con)
+})
+
+test_that("valuation_prices 缺失持仓的实时价回退日收盘", {
+  con = new_test_con()
+  b = synthetic_bars(c("600000", "600519"), 5)
+  replace_bars(con, "600000", b[symbol == "600000"], table = "daily_bar_real")
+  replace_bars(con, "600519", b[symbol == "600519"], table = "daily_bar_real")
+  px = last_close(con, "600000")
+  upsert_position(con, "600000", 100, 100, px)
+  upsert_position(con, "600519", 100, 100, px)
+  rt = data.table(code = "600000", price = 10)     # 实时缺 600519
+  pm = valuation_prices(con, rt)
+  expect_true(all(c("600000", "600519") %in% pm$symbol))
+  expect_equal(pm[symbol == "600519"]$price, last_close(con, "600519"))
+  dbDisconnect(con)
+})
+
+test_that("account_kpis_view 当天浮盈 = Σ((现价-昨收) × 数量)", {
+  con = new_test_con()
+  upsert_position(con, "600000", 100, 100, 10)
+  upsert_position(con, "600519", 200, 200, 20)
+  pm = data.table(symbol = c("600000", "600519"), price = c(10.5, 19.8))
+  pc = data.table(symbol = c("600000", "600519"), prev_close = c(10.0, 20.0))
+  k = account_kpis_view(con, price_map = pm, prev_close = pc)
+  expect_equal(k$day_pnl, (10.5 - 10.0) * 100 + (19.8 - 20.0) * 200)
+  # 无 prev_close → 0
+  expect_equal(account_kpis_view(con, price_map = pm)$day_pnl, 0)
+  dbDisconnect(con)
+})
+
+test_that("prev_close_map 昨收：最新 bar 是今天取前一日，否则取最新", {
+  con = new_test_con()
+  b = synthetic_bars("600000", 5)
+  replace_bars(con, "600000", b, table = "daily_bar_real")
+  pc = prev_close_map(con, "600000")
+  # synthetic_bars 未刷新到"今天"，最新 bar 即昨收 → 等于最新收盘
+  expect_equal(pc$prev_close, last_close(con, "600000"))
   dbDisconnect(con)
 })
 

@@ -11,7 +11,11 @@ account_server = \(id, con, rv, cur_rt) {
 
     output$kpis = renderUI({
       tick(5000, session)
-      k = account_kpis_view(con, price_map = cur_rt()[, .(symbol = code, price)])
+      k = account_kpis_view(
+        con,
+        price_map = valuation_prices(con, valuation_quote(con, cur_rt())),
+        prev_close = prev_close_map(con, rv$symbols$code)
+      )
       fluidRow(
         column(3, value_box(fmt_money(k$cash), "可用资金", MAGENTA)),
         column(
@@ -31,7 +35,7 @@ account_server = \(id, con, rv, cur_rt) {
             fmt_signed(k$pnl),
             "浮盈亏",
             ifelse(k$pnl >= 0, RED_UP, GREEN_DOWN),
-            change = k$pnl
+            change = k$day_pnl
           )
         )
       )
@@ -44,7 +48,7 @@ account_server = \(id, con, rv, cur_rt) {
 
     output$positions = renderDT({
       tick(5000, session)
-      d = positions_view(con, sym_map(rv$symbols), price_map = cur_rt()[, .(symbol = code, price)])
+      d = positions_view(con, sym_map(rv$symbols), price_map = valuation_prices(con, valuation_quote(con, cur_rt())))
       if (nrow(d) == 0) return(datatable(data.table()))
       datatable(
         d,
