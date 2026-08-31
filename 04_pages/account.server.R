@@ -17,7 +17,16 @@ account_server = \(id, con, rv, cur_rt) {
         prev_close = prev_close_map(con, rv$symbols$code)
       )
       fluidRow(
-        column(3, value_box(fmt_money(k$cash), "可用资金", MAGENTA)),
+        column(3, value_box(as.character(k$n_pos), "持仓数", PURPLE)),
+        column(
+          3,
+          value_box(
+            fmt_signed(k$pnl),
+            "浮盈亏",
+            ifelse(k$pnl >= 0, RED_UP, GREEN_DOWN),
+            change = k$day_pnl
+          )
+        ),
         column(
           3,
           value_box(
@@ -28,16 +37,7 @@ account_server = \(id, con, rv, cur_rt) {
             sparkline = k$spark
           )
         ),
-        column(3, value_box(as.character(k$n_pos), "持仓数", PURPLE)),
-        column(
-          3,
-          value_box(
-            fmt_signed(k$pnl),
-            "浮盈亏",
-            ifelse(k$pnl >= 0, RED_UP, GREEN_DOWN),
-            change = k$day_pnl
-          )
-        )
+        column(3, value_box(fmt_money(k$cash), "可用资金", MAGENTA))
       )
     })
 
