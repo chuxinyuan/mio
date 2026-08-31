@@ -20,7 +20,7 @@ req_data = \(rv) {
   invisible(rv$data)
 }
 
-# 订单表显示数据（名称/方向/状态中文化）
+# 订单表显示数据（名称/方向/状态中文化；市价单价格 NA 显示最新真实收盘参考价）
 orders_view = \(con, sym_map_dt) {
   o = get_orders(con)
   if (nrow(o) == 0) {
@@ -34,6 +34,11 @@ orders_view = \(con, sym_map_dt) {
       status == "cancelled", "已撤销",
       default = status
     )]
+    if (any(is.na(o$price))) {
+      px = latest_prices(con)
+      px_map = setNames(px$price, px$symbol)
+      o[is.na(price), price := px_map[symbol]]
+    }
   }
   o[, .(id, ts, symbol, name, side, qty, price, status)]
 }

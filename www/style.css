@@ -278,6 +278,32 @@ table.dataTable.hover tbody tr:hover { background: rgba(0,240,255,0.08) !importa
 .btn { letter-spacing: 1px; font-size: 12.8px !important; }
 .echarts4r { width: 100%; }
 
+/* Shiny 通知：深色不透明 + 霓虹边框，避免浅灰半透明观感像被遮挡 */
+#shiny-notification-panel {
+  z-index: 100000;
+}
+.shiny-notification {
+  background: rgba(9, 13, 22, 0.97) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--cyan) !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.25) !important;
+  opacity: 1 !important;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.shiny-notification-message {
+  border-color: var(--cyan) !important;
+}
+.shiny-notification-warning {
+  border-color: var(--yellow) !important;
+}
+.shiny-notification-error {
+  border-color: var(--red-up) !important;
+}
+.shiny-notification-close {
+  color: var(--text-dim) !important;
+}
+
 /* box 内容字号统一缩小到 90%（个股K线框除外，保持和谐） */
 table.dataTable { font-size: 14px; }                     /* DT 表格 16 → 14px */
 .form-control { font-size: 14px !important; }             /* 输入框 16 → 14px */

@@ -57,12 +57,36 @@ order_server = \(id, con, rv) {
       }
     })
 
+    # 实时限价监控：交易时段有未成交单时，按实时市价撮合，市价达到限价即自动成交
+    observe({
+      tick(15000, session)
+      open_ids = get_orders(con, status = "open")$id
+      if (in_trading_hours() && length(open_ids) > 0) {
+        codes = unique(get_orders(con, status = "open")$symbol)
+        px = tryCatch(fetch_realtime(codes), error = \(e) data.table())
+        if (nrow(px) > 0) match_orders(con, setNames(px$price, px$symbol))
+      }
+    })
+
     observeEvent(input$submit, {
       req(input$sym)
       px = suppressWarnings(as.numeric(input$price))
       if (is.na(px) || px <= 0) px = NA_real_
       r = place_order(con, input$sym, input$side, input$qty, px)
-      showNotification(r$msg, type = if (r$ok) "message" else "error")
+      if (!r$ok) {
+        showNotification(r$msg, type = "error")
+        return()
+      }
+      # 提交即按实时市价撮合：限价未达则保持未成交，实时监控达到限价自动成交
+      rt = tryCatch(fetch_realtime(input$sym), error = \(e) data.table())
+      if (nrow(rt) > 0) match_orders(con, setNames(rt$price, rt$symbol))
+      st = get_orders(con)[id == r$id]$status
+      if (isTRUE(st == "filled")) {
+        px_fill = get_fills(con)[order_id == r$id]$price[1]
+        showNotification(sprintf("下单成功，已按 %.2f 成交", px_fill), type = "message")
+      } else {
+        showNotification("已下单，实时市价达到限价将自动成交", type = "warning")
+      }
     })
 
     observeEvent(input$cancel, {
@@ -72,9 +96,8 @@ order_server = \(id, con, rv) {
     })
 
     observeEvent(input$match, {
-      px = latest_prices(con)
-      price_map = setNames(px$price, px$symbol)
-      match_orders(con, price_map)
+      px = tryCatch(fetch_realtime(rv$symbols$code), error = \(e) data.table())
+      if (nrow(px) > 0) match_orders(con, setNames(px$price, px$symbol))
       showNotification("撮合完成", type = "message")
     })
 

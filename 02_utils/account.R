@@ -67,7 +67,8 @@ rollover_positions = \(con, date = Sys.Date()) {
 }
 
 # 下单（校验：100 股整数倍、现金/可卖数量充足、涨跌停价）
-# 市价单（price=NA）解析为最新真实收盘价，供展示/日志，并与限价单同样做现金/涨跌停校验
+# 市价单（price=NA）以最新真实收盘价为参考做现金/涨跌停校验与日志显示，订单仍存 NA（匹配时必成交）
+# 限价单（price 非 NA）按限价存储；match_orders 依据限价决定是否成交
 place_order = \(
   con,
   symbol,
@@ -82,15 +83,15 @@ place_order = \(
   if (qty %% 100 != 0) return(list(ok = FALSE, msg = "数量需为 100 股整数倍"))
 
   prev = last_close(con, symbol)
-  if (is.na(price)) price = prev        # 市价单：解析为最新真实收盘价
-  if (!is.na(price) && !is.na(prev)) {
+  ref = if (is.na(price)) prev else price    # 市价单用最新真实收盘价做参考
+  if (!is.na(ref) && !is.na(prev)) {
     lim = price_limits(symbol, prev)
-    if (side == "buy"  && price > lim$up)   return(list(ok = FALSE, msg = "限价超过涨停价"))
-    if (side == "sell" && price < lim$down) return(list(ok = FALSE, msg = "限价低于跌停价"))
+    if (side == "buy"  && ref > lim$up)   return(list(ok = FALSE, msg = "限价超过涨停价"))
+    if (side == "sell" && ref < lim$down) return(list(ok = FALSE, msg = "限价低于跌停价"))
   }
 
-  if (side == "buy" && !is.na(price)) {
-    cost = qty * price + commission(qty * price, settings)
+  if (side == "buy" && !is.na(ref)) {
+    cost = qty * ref + commission(qty * ref, settings)
     if (cost > get_cash(con)) return(list(ok = FALSE, msg = "现金不足"))
   }
   if (side == "sell") {
@@ -107,7 +108,7 @@ place_order = \(
     sprintf(
       "下单 %s %s %s %d 股%s",
       side_cn, symbol, nm, qty,
-      ifelse(is.na(price), "，市价", sprintf("，价格 %.2f", price))
+      ifelse(is.na(ref), "，市价", sprintf("，价格 %.2f", ref))
     ),
     "info",
     "account",
@@ -140,6 +141,12 @@ match_orders = \(
     o = orders[i]
     px = as.numeric(price_map[o$symbol])
     if (is.na(px)) next
+
+    # 限价判定：市价单（price=NA）必成交；限价单需市价达到限价
+    if (!is.na(o$price)) {
+      if (o$side == "buy"  && px > o$price) next   # 市价高于买入限价 → 等待
+      if (o$side == "sell" && px < o$price) next   # 市价低于卖出限价 → 等待
+    }
 
     # 涨跌停约束
     prev = last_close(con, o$symbol)
@@ -271,6 +278,9 @@ auto_trade = \(
         results[[length(results) + 1]] = place_order(con, s, "buy", qty, NA_real_, ts)
     }
   }
+
+  # 自动下单后立即撮合（市价单成交；限价单按限价判定）
+  if (length(results) > 0) match_orders(con, prices)
 
   results
 }

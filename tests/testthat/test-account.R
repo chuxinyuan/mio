@@ -125,16 +125,39 @@ test_that("reset_account 清空订单/成交/持仓/快照并恢复初始资金"
   dbDisconnect(con)
 })
 
-test_that("place_order 市价单解析真实收盘价入库，日志显示价格", {
+test_that("place_order 市价单价格 NA 入库、日志显示参考价、订单表显示参考价", {
   con = new_test_con()
   b = synthetic_bars("600000", 5)
   replace_bars(con, "600000", b, table = "daily_bar_real")
   px = last_close(con, "600000")
   oid = place_order(con, "600000", "buy", 100)$id
   o = get_orders(con)
-  expect_equal(o[o$id == oid]$price, px)
+  expect_true(is.na(o[o$id == oid]$price), info = "市价单价格存 NA（匹配时必成交）")
   msg = get_logs(con)$message[1]
   expect_match(msg, sprintf("价格 %.2f", px))
   expect_false(grepl("市价", msg))
+  d = orders_view(con, sym_map(get_symbols(con)))
+  expect_equal(d[id == oid]$price, px, info = "订单表显示参考价")
+  dbDisconnect(con)
+})
+
+test_that("match_orders 限价语义：市价未达限价不成交，达到才成交", {
+  con = new_test_con()
+  b = synthetic_bars("600000", 5)
+  replace_bars(con, "600000", b, table = "daily_bar_real")
+  px = last_close(con, "600000")
+  px_map = setNames(c(px), "600000")
+  # 买限价高于市价 → 立即成交
+  oid1 = place_order(con, "600000", "buy", 100, px)$id
+  match_orders(con, px_map)
+  expect_equal(get_orders(con)[id == oid1]$status, "filled")
+  # 买限价低于市价 → 不成交，保持 open
+  oid2 = place_order(con, "600000", "buy", 100, px - 1)$id
+  match_orders(con, px_map)
+  expect_equal(get_orders(con)[id == oid2]$status, "open")
+  # 市价降到 ≤ 限价 → 成交
+  px_low = setNames(c(px - 1), "600000")
+  match_orders(con, px_low)
+  expect_equal(get_orders(con)[id == oid2]$status, "filled")
   dbDisconnect(con)
 })

@@ -129,7 +129,8 @@ strategy_server = \(id, con, rv) {
 
     observeEvent(input$auto_trade, {
       req(!is.null(rv$data), nrow(rv$bars) > 0)
-      px = latest_prices(con)
+      px = tryCatch(fetch_realtime(rv$symbols$code), error = \(e) data.table())
+      if (nrow(px) == 0) px = latest_prices(con)
       price_map = setNames(px$price, px$symbol)
       res = tryCatch(
         auto_trade(
