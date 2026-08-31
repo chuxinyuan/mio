@@ -135,6 +135,18 @@ test_that("valuation_prices 覆盖成交/未成交标的，非持仓成交现价
   dbDisconnect(con)
 })
 
+test_that("收盘快照估值口径与账户页一致（实时为空 → 日收盘）", {
+  con = new_test_con()
+  b = synthetic_bars("600000", 5)
+  replace_bars(con, "600000", b, table = "daily_bar_real")
+  px = last_close(con, "600000")
+  upsert_position(con, "600000", 100, 100, px)
+  k = account_kpis_view(con)
+  a = get_account(con, prices = valuation_prices(con, valuation_quote(con, data.table())))
+  expect_equal(a$equity, k$equity, info = "收盘快照 equity 应与账户页当前总资产同口径")
+  dbDisconnect(con)
+})
+
 test_that("持仓市值/浮盈/成本舍入自洽，KPI 累计浮盈 = Σ持仓表浮盈", {
   con = new_test_con()
   upsert_position(con, "600000", 100, 100, 10.005)

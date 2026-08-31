@@ -1,16 +1,22 @@
 # 03_components/value_box.R — 赛博 KPI 卡（sparkline + 涨跌箭头）
 
 # 内联 SVG sparkline（纯函数，可在 renderUI 中使用）
-inline_sparkline = \(values, color, width = 90, height = 24) {
+# 锚定初始资金基准 + 最小缩放范围：小幅波动不平铺整高、平坦序列居中（券商资产曲线口径）
+inline_sparkline = \(values, color, width = 90, height = 24, baseline = STARTING_CASH) {
   v = as.numeric(values)
   v = v[!is.na(v)]
   if (length(v) < 2) return(HTML(""))
-  min_v = min(v)
-  max_v = max(v)
-  rng = max_v - min_v
-  if (rng <= 0) rng = 1
+  lo = min(v, baseline)
+  hi = max(v, baseline)
+  rng = hi - lo
+  min_rng = baseline * 0.10
+  if (rng < min_rng) {
+    center = (min(v) + max(v)) / 2
+    lo = center - min_rng / 2
+    hi = center + min_rng / 2
+  }
   x = seq(1, width, length.out = length(v))
-  y = height - (v - min_v) / rng * (height - 4) - 2
+  y = height - (v - lo) / (hi - lo) * (height - 4) - 2
   pts = paste0(round(x, 1), ",", round(y, 1), collapse = " ")
   HTML(sprintf(
     '<svg width="%d" height="%d" class="cyber-spark"><polyline points="%s" fill="none" stroke="%s" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>',

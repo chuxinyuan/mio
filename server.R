@@ -7,6 +7,7 @@ server = \(input, output, session) {
   cur_rt = reactiveVal(data.table())
   rt_init = reactiveVal(FALSE)
   last_snap = reactiveVal(0)
+  was_trading = reactiveVal(FALSE)
 
   observe({
     tick(10000, session)
@@ -18,12 +19,22 @@ server = \(input, output, session) {
         # 参照券商：盘中定期写权益快照（约每 60s），供账户权益曲线实时更新
         now = as.numeric(Sys.time())
         if (in_trading_hours() && now - last_snap() >= 60) {
-          a = get_account(con, prices = valuation_prices(con, px))
+          a = get_account(con, prices = valuation_prices(con, valuation_quote(con, px)))
           save_snapshot(con, format(Sys.time(), "%Y-%m-%d %H:%M:%S"), a$cash, a$equity)
           last_snap(now)
         }
       }
     }
+    # 参照券商：交易时段结束时（当日未写过）用权威日收盘估值写收盘快照，使曲线最后一点与当前总资产一致
+    if (!in_trading_hours() && was_trading() && !isFALSE(rt_init())) {
+      today = format(Sys.Date(), "%Y-%m-%d")
+      if (get_meta(con, "close_snap_date", default = "") != today) {
+        a = get_account(con, prices = valuation_prices(con, data.table()))   # 收盘后=日收盘
+        save_snapshot(con, format(Sys.time(), "%Y-%m-%d %H:%M:%S"), a$cash, a$equity)
+        set_meta(con, "close_snap_date", today)
+      }
+    }
+    was_trading(in_trading_hours())
   })
 
   observe({

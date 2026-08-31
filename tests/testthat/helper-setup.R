@@ -28,10 +28,12 @@ suppressMessages({
 })
 
 # 临时 SQLite 连接（已 init_db + init_account，初始现金 = STARTING_CASH）
+# 初始快照 ts 固定为历史时刻，保证测试中任意合成 ts（如 2023-01-02）排序在其后
 new_test_con = \() {
   con = connect_db(tempfile(fileext = ".db"))
   init_db(con)
   init_account(con)
+  dbExecute(con, "UPDATE account_snapshot SET ts = '2023-01-01 00:00:00'")
   con
 }
 

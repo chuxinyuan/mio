@@ -374,7 +374,7 @@ save_snapshot = \(con, ts, cash, equity) {
   invisible(TRUE)
 }
 
-get_snapshots = \(con) as.data.table(dbGetQuery(con, "SELECT * FROM account_snapshot"))
+get_snapshots = \(con) as.data.table(dbGetQuery(con, "SELECT * FROM account_snapshot ORDER BY ts"))
 
 # ---- log ----
 write_log = \(
