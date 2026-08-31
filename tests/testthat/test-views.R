@@ -118,6 +118,23 @@ test_that("valuation_prices 缺失持仓的实时价回退日收盘", {
   dbDisconnect(con)
 })
 
+test_that("valuation_prices 覆盖成交/未成交标的，非持仓成交现价不为 NA", {
+  con = new_test_con()
+  b = synthetic_bars(c("600000", "600519"), 5)
+  replace_bars(con, "600000", b[symbol == "600000"], table = "daily_bar_real")
+  replace_bars(con, "600519", b[symbol == "600519"], table = "daily_bar_real")
+  o1 = save_order(con, "2023-01-01 09:00:00", "600000", "buy", 100, 10)
+  save_fill(con, o1, "2023-01-02 09:00:00", 10, 100)
+  set_order_status(con, o1, "filled")
+  upsert_position(con, "600000", 100, 0, 10)
+  o2 = save_order(con, "2023-01-01 09:00:00", "600519", "buy", 100, 20)   # 未成交 open
+  pm = valuation_prices(con, data.table())    # 实时为空（收盘后）
+  expect_true(all(c("600000", "600519") %in% pm$symbol))
+  f = fills_view(con, sym_map(get_symbols(con)), price_map = pm)
+  expect_false(any(is.na(f$cur_price)), info = "非持仓成交现价不应为 NA")
+  dbDisconnect(con)
+})
+
 test_that("account_kpis_view 当天浮盈 = Σ((现价-昨收) × 数量)", {
   con = new_test_con()
   upsert_position(con, "600000", 100, 100, 10)
@@ -128,6 +145,37 @@ test_that("account_kpis_view 当天浮盈 = Σ((现价-昨收) × 数量)", {
   expect_equal(k$day_pnl, (10.5 - 10.0) * 100 + (19.8 - 20.0) * 200)
   # 无 prev_close → 0
   expect_equal(account_kpis_view(con, price_map = pm)$day_pnl, 0)
+  dbDisconnect(con)
+})
+
+test_that("account_kpis_view 首日买入：当天浮盈 = 现价-买入均价（券商口径）", {
+  con = new_test_con()
+  today_s = format(Sys.Date(), "%Y-%m-%d")
+  o1 = save_order(con, paste0(today_s, " 09:30:00"), "600000", "buy", 100, 10)
+  save_fill(con, o1, paste0(today_s, " 09:30:00"), 10, 100)
+  set_order_status(con, o1, "filled")
+  upsert_position(con, "600000", 100, 0, 10)
+  pm = data.table(symbol = "600000", price = 11)
+  pc = data.table(symbol = "600000", prev_close = 10.5)
+  k = account_kpis_view(con, price_map = pm, prev_close = pc)
+  expect_equal(k$pnl, 100)         # 累计 = (11-10)*100
+  expect_equal(k$day_pnl, 100)      # 当天 = (11-买入均价10)*100（今日买入不用昨收）
+  dbDisconnect(con)
+})
+
+test_that("account_kpis_view 当日加仓：昨收*昨日量 + 买入价*今日量", {
+  con = new_test_con()
+  today_s = format(Sys.Date(), "%Y-%m-%d")
+  upsert_position(con, "600000", 100, 100, 10)
+  o1 = save_order(con, paste0(today_s, " 10:00:00"), "600000", "buy", 100, 10.5)
+  save_fill(con, o1, paste0(today_s, " 10:00:00"), 10.5, 100)
+  set_order_status(con, o1, "filled")
+  upsert_position(con, "600000", 200, 100, (100 * 10 + 100 * 10.5) / 200)
+  pm = data.table(symbol = "600000", price = 11)
+  pc = data.table(symbol = "600000", prev_close = 10)
+  k = account_kpis_view(con, price_map = pm, prev_close = pc)
+  expect_equal(k$pnl, 150)                       # 累计 = (11-10.25)*200
+  expect_equal(k$day_pnl, (11 - 10) * 100 + (11 - 10.5) * 100)   # 100 + 50
   dbDisconnect(con)
 })
 

@@ -63,15 +63,19 @@ fills_view = \(con, sym_map_dt, price_map = NULL) {
   f[, .(id, order_id, ts, symbol, name, side, price, qty, cur_price, ret)]
 }
 
-# 估值价格：实时价缺失的持仓回退最新日收盘，保证市值/权益不遗漏
+# 估值价格：实时价缺失的持仓/成交/未成交订单回退最新日收盘，保证现价/市值/权益不遗漏
 valuation_prices = \(con, rt_dt) {
   pm = if (nrow(rt_dt) > 0) {
     rt_dt[, .(symbol = code, price)]
   } else {
     data.table(symbol = character(), price = numeric())
   }
-  held = get_positions(con)[qty > 0]$symbol
-  missing = setdiff(held, pm$symbol)
+  need = unique(c(
+    get_positions(con)[qty > 0]$symbol,
+    get_fills(con)$symbol,
+    get_orders(con, status = "open")$symbol
+  ))
+  missing = setdiff(need, pm$symbol)
   if (length(missing) > 0) {
     lp = latest_prices(con)[symbol %in% missing]
     pm = rbindlist(list(pm, lp), fill = TRUE)
@@ -104,19 +108,45 @@ prev_close_map = \(con, symbols) {
 
 # 账户 KPI（现金/总资产/持仓数/累计浮盈/当日盈亏/当天浮盈/近 30 快照）
 # price_map: data.table(symbol, price) 估值价（交易实时/收盘日收盘）
-# prev_close: data.table(symbol, prev_close) 昨收（日数据，计算当天浮盈用）
+# prev_close: data.table(symbol, prev_close) 昨收（日数据）
+# 当天浮盈（券商口径）：昨日已有持仓 → (现价-昨收)×数量；今日买入且仍持有 → (现价-今日买入均价)×数量
 account_kpis_view = \(con, price_map = NULL, prev_close = NULL) {
   a = get_account(con, prices = price_map %||% latest_prices(con))
   pos = a$positions
   pnl = sum((pos$price - pos$avg_cost) * pos$qty, na.rm = TRUE)
   pnl = ifelse(is.na(pnl), 0, pnl)
-  # 当天浮盈 = Σ((现价 - 昨收) × 数量)（持仓价格当日变动，不含费用；昨收取日数据更权威）
-  day_pnl = if (!is.null(prev_close) && nrow(prev_close) > 0 && nrow(pos) > 0) {
-    pos2 = merge(pos, prev_close, by = "symbol", all.x = TRUE)
-    sum((pos2$price - pos2$prev_close) * pos2$qty, na.rm = TRUE)
-  } else {
-    0
+
+  day_pnl = 0
+  if (nrow(pos) > 0 && !is.null(prev_close) && nrow(prev_close) > 0) {
+    today_str = format(Sys.Date(), "%Y-%m-%d")
+    fills = get_fills(con)
+    if (nrow(fills) > 0) fills = fills[startsWith(ts, today_str)]
+    buys  = if (nrow(fills)) fills[side == "buy"] else data.table()
+    sells = if (nrow(fills)) fills[side == "sell"] else data.table()
+    bsum = if (nrow(buys)) {
+      buys[, .(bqty = sum(qty), bamt = sum(qty * price)), by = symbol]
+    } else {
+      data.table(symbol = character(), bqty = numeric(), bamt = numeric())
+    }
+    ssum = if (nrow(sells)) {
+      sells[, .(sqty = sum(qty)), by = symbol]
+    } else {
+      data.table(symbol = character(), sqty = numeric())
+    }
+    p2 = merge(pos, prev_close, by = "symbol", all.x = TRUE)
+    p2 = merge(p2, bsum, by = "symbol", all.x = TRUE)
+    p2 = merge(p2, ssum, by = "symbol", all.x = TRUE)
+    p2[, `:=`(
+      bqty = fifelse(is.na(bqty), 0, bqty),
+      sqty = fifelse(is.na(sqty), 0, sqty)
+    )]
+    p2[, net_buy := pmin(qty, pmax(0, bqty - sqty))]     # 今日净买入且仍持有
+    p2[, held_before := qty - net_buy]                    # 昨日持有到今日的数量
+    p2[, avg_buy := fifelse(net_buy > 0 & bqty > 0, bamt / bqty, NA_real_)]
+    day_pnl = sum((p2$price - p2$prev_close) * p2$held_before, na.rm = TRUE) +
+      sum((p2$price - p2$avg_buy) * p2$net_buy, na.rm = TRUE)
   }
+
   snaps = get_snapshots(con)   # ts, cash, equity
   if (nrow(snaps) > 0) {
     today = format(Sys.Date(), "%Y-%m-%d")
