@@ -1,6 +1,6 @@
 # 04_pages/account.server.R — 账户监控
 
-account_server = \(id, con, rv) {
+account_server = \(id, con, rv, cur_rt) {
   moduleServer(id, \(input, output, session) {
 
     observe({
@@ -11,7 +11,7 @@ account_server = \(id, con, rv) {
 
     output$kpis = renderUI({
       tick(5000, session)
-      k = account_kpis_view(con)
+      k = account_kpis_view(con, price_map = cur_rt()[, .(symbol = code, price)])
       fluidRow(
         column(3, value_box(fmt_money(k$cash), "可用资金", MAGENTA)),
         column(
@@ -44,7 +44,7 @@ account_server = \(id, con, rv) {
 
     output$positions = renderDT({
       tick(5000, session)
-      d = positions_view(con, sym_map(rv$symbols))
+      d = positions_view(con, sym_map(rv$symbols), price_map = cur_rt()[, .(symbol = code, price)])
       if (nrow(d) == 0) return(datatable(data.table()))
       datatable(
         d,

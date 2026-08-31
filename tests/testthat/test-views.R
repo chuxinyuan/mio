@@ -58,6 +58,28 @@ test_that("positions_view 四项两位小数", {
   dbDisconnect(con)
 })
 
+test_that("视图 price_map 实时价驱动 现价/市值/浮盈亏", {
+  con = new_test_con()
+  b = synthetic_bars("600000", 5)
+  replace_bars(con, "600000", b, table = "daily_bar_real")
+  px = last_close(con, "600000")
+  upsert_position(con, "600000", 100, 0, px)
+  price_hi = data.table(symbol = "600000", price = round2(px * 1.05, 2))
+  d = positions_view(con, sym_map(mk_map()), price_map = price_hi)
+  expect_equal(d$price, price_hi$price)
+  expect_equal(d$market_value, round2(100 * price_hi$price, 2))
+  expect_equal(d$pnl, round2((price_hi$price - round2(px, 2)) * 100, 2))
+  k = account_kpis_view(con, price_map = price_hi)
+  expect_equal(k$equity, 100000 + 100 * price_hi$price)   # upsert 不扣现金，权益 = 现金 + 市值
+  # fills_view 现价也随 price_map
+  oid = save_order(con, "2023-01-01 09:00:00", "600000", "buy", 100, px)
+  save_fill(con, oid, "2023-01-02 09:00:00", px, 100)
+  set_order_status(con, oid, "filled")
+  f = fills_view(con, sym_map(mk_map()), price_map = price_hi)
+  expect_equal(f$cur_price, price_hi$price)
+  dbDisconnect(con)
+})
+
 test_that("account_kpis_view 返回 KPI 字段", {
   con = new_test_con()
   k = account_kpis_view(con)

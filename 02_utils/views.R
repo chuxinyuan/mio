@@ -44,11 +44,12 @@ orders_view = \(con, sym_map_dt) {
 }
 
 # 成交回报显示数据（名称/现价/回报，先舍入价格再算回报保证口径一致）
-fills_view = \(con, sym_map_dt) {
+# price_map: data.table(symbol, price) 实时价，NULL 回退最新日收盘
+fills_view = \(con, sym_map_dt, price_map = NULL) {
   f = get_fills(con)
   if (nrow(f) == 0) return(data.table())
   f = merge(f, sym_map_dt, by = "symbol", all.x = TRUE)
-  px = latest_prices(con)
+  px = price_map %||% latest_prices(con)
   px_map = setNames(px$price, px$symbol)
   f[, price := round2(price, 2)]
   f[, cur_price := round2(px_map[symbol], 2)]
@@ -63,8 +64,8 @@ fills_view = \(con, sym_map_dt) {
 }
 
 # 账户 KPI（现金/总资产/持仓数/浮盈亏/权益变化/近 30 快照）
-account_kpis_view = \(con) {
-  a = get_account(con, prices = latest_prices(con))
+account_kpis_view = \(con, price_map = NULL) {
+  a = get_account(con, prices = price_map %||% latest_prices(con))
   pos = a$positions
   pnl = sum((pos$price - pos$avg_cost) * pos$qty, na.rm = TRUE)
   pnl = ifelse(is.na(pnl), 0, pnl)
@@ -81,8 +82,8 @@ account_kpis_view = \(con) {
 }
 
 # 当前持仓显示数据（成本/现价/市值/浮盈亏均两位小数）
-positions_view = \(con, sym_map_dt) {
-  pos = get_account(con, prices = latest_prices(con))$positions
+positions_view = \(con, sym_map_dt, price_map = NULL) {
+  pos = get_account(con, prices = price_map %||% latest_prices(con))$positions
   if (nrow(pos) == 0) return(data.table())
   pos = merge(pos, sym_map_dt, by = "symbol", all.x = TRUE)
   pos[, avg_cost := round2(avg_cost, 2)]

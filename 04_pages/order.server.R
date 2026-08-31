@@ -1,6 +1,6 @@
 # 04_pages/order.server.R — 订单管理
 
-order_server = \(id, con, rv) {
+order_server = \(id, con, rv, cur_rt) {
   moduleServer(id, \(input, output, session) {
 
     observe({
@@ -114,7 +114,7 @@ order_server = \(id, con, rv) {
 
     output$fills = renderDT({
       tick(5000, session)
-      d = fills_view(con, sym_map(rv$symbols))
+      d = fills_view(con, sym_map(rv$symbols), price_map = cur_rt()[, .(symbol = code, price)])
       if (nrow(d) == 0) return(datatable(data.table()))
       datatable(
         d,

@@ -1,6 +1,6 @@
 # 04_pages/market.server.R — 行情展示
 
-market_server = \(id, con, rv) {
+market_server = \(id, con, rv, cur_rt) {
   moduleServer(id, \(input, output, session) {
 
     observe({
@@ -30,18 +30,8 @@ market_server = \(id, con, rv) {
       kline_chart(kline())
     })
 
-    rt = reactiveVal(data.table())
-    rt_init = reactiveVal(FALSE)
-    observe({
-      tick(10000, session)
-      if ((in_trading_hours() || isFALSE(rt_init())) && nrow(rv$symbols) > 0) {
-        rt(tryCatch(fetch_realtime(rv$symbols$code), error = \(e) data.table()))
-        rt_init(TRUE)
-      }
-    })
-
     output$rt_table = renderDT({
-      d = realtime_view(rt())
+      d = realtime_view(cur_rt())
       if (nrow(d) == 0) return(datatable(data.table()))
       datatable(
         d,
